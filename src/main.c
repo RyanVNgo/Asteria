@@ -9,6 +9,7 @@ int communicateStatusAndExit(int *status) {
 
 void printHeader(fitsfile*);
 
+
 int main(int argc, char* argv[]) {
   fitsfile* fptr;
   int status = 0;
