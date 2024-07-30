@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = $(foreach dir, $(wildcard inc/*), -I$(dir))
-LDFLAGS = $(foreach dir, $(wildcard lib/*), -L$(dir)) -lm -lnsl -lz
+CFLAGS = $(foreach dir, $(wildcard inc/*), -I$(dir)) `pkg-config --cflags --libs gtk+-3.0`
+LDFLAGS = $(foreach dir, $(wildcard lib/*), -L$(dir)) `pkg-config --cflags --libs gtk+-3.0` -lm
 
 SRCDIR = src
 OBJDIR = obj

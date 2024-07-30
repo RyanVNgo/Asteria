@@ -1,0 +1,7 @@
+
+# for LSP
+.cache/
+*.json
+
+# test images
+testImages/
