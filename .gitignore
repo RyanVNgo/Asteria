@@ -1,7 +1,9 @@
+# executable
+Asteria
 
 # for LSP
 .cache/
 *.json
 
 # test images
-testImages/
+test_images/
