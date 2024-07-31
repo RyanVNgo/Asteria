@@ -4,11 +4,12 @@ LDFLAGS = $(foreach dir, $(wildcard lib/*), -L$(dir)) `pkg-config --cflags --lib
 
 SRCDIR = src
 OBJDIR = obj
-LIBDIRS = $(wildcard lib/*)
-LIBSA = $(foreach dir, $(LIBDIRS), $(dir)/*.a)
 
 SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
+
+LIBDIRS = $(wildcard lib/*)
+LIBSA = $(foreach dir, $(LIBDIRS), $(dir)/*.a)
 
 PROGRAM = Asteria
 
