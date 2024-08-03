@@ -16,13 +16,13 @@ PROGRAM = Asteria
 all: $(PROGRAM)
 
 $(PROGRAM): $(OBJECTS) 
-	$(CC) $< -o $@ $(LIBSA) $(LDFLAGS)
+	$(CC) $^ -o $@ $(LDFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm $(PROGRAM)
 	rm $(OBJECTS)
+	rm $(PROGRAM)
 
 .PHONY: all clean
