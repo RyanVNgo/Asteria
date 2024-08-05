@@ -1,6 +1,10 @@
 CC = gcc
 CFLAGS = $(foreach dir, $(wildcard inc/*), -I$(dir)) `pkg-config --cflags --libs gtk+-3.0`
-LDFLAGS = $(foreach dir, $(wildcard lib/*), -L$(dir)) `pkg-config --cflags --libs gtk+-3.0` -lm
+
+#local path from makefile to cfitsio library
+CFITSIO_LIBPATH = lib/cfitsio-4.4.1
+LDFLAGS = $(foreach dir, $(wildcard lib/*), -L$(dir)) `pkg-config --cflags --libs gtk+-3.0` -lcfitsio -lm
+LDFLAGS += -Wl,-rpath,$(CFITSIO_LIBPATH)
 
 SRCDIR = src
 OBJDIR = obj

@@ -1,5 +1,6 @@
+#include "fitsio.h"
+
 #include "main_menu_bar.h"
-#include "gtk/gtk.h"
 #include "menu_factory.h"
 #include "file_handler.h"
 
@@ -23,9 +24,9 @@ void open_item_activate(GtkWidget* menu_item, gpointer data) {
   GFile* file = fh_get_file(NULL, NULL);
   if (!file) return;
   char* filename = g_file_get_path(file);
-  g_print("Filename: %s\n", filename);
-  g_free(file);
-  g_free(filename);
+
+  g_object_unref(file);
+  return;
 }
 
 static GtkWidget* menu_bar_file_item() {

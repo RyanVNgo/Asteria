@@ -1,4 +1,4 @@
-prefix=/home/ryanvngo/CProjects/Asteria/inc
+prefix=/home/ryan-ngo/Documents/Coding-Projects/CProjects/Asteria/inc
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
