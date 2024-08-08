@@ -1,7 +1,7 @@
-#include "file_handler.h"
+#include "app_glib_helper.h"
 #include "glib.h"
 
-GFile* fh_get_file(GtkWidget* widget, gpointer data) {
+GFile* hglib_get_file(GtkWidget* widget, gpointer data) {
   GFile* file = NULL;
   GtkWidget* dialog = gtk_file_chooser_dialog_new(
       "Open File",

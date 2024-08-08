@@ -1,8 +1,9 @@
 #include "fitsio.h"
 
 #include "main_menu_bar.h"
-#include "menu_factory.h"
-#include "file_handler.h"
+#include "app_gtk_helper.h"
+#include "app_glib_helper.h"
+#include "gtk/gtk.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);
@@ -21,7 +22,7 @@ static void on_window_activate(GtkWidget* menu_item, gpointer window) {
 /* File */
 
 void open_item_activate(GtkWidget* menu_item, gpointer data) {
-  GFile* file = fh_get_file(NULL, NULL);
+  GFile* file = hglib_get_file(NULL, NULL);
   if (!file) return;
   char* filename = g_file_get_path(file);
 
@@ -30,7 +31,7 @@ void open_item_activate(GtkWidget* menu_item, gpointer data) {
 }
 
 static GtkWidget* menu_bar_file_item() {
-  GtkWidget* file_item = mf_menu_item_with_submenu_init("File");
+  GtkWidget* file_item = hgtk_menu_item_with_submenu_init("File");
 
   GtkWidget* open_item = gtk_menu_item_new_with_label("Open");
   g_signal_connect(open_item, "activate", G_CALLBACK(open_item_activate), NULL);
@@ -38,9 +39,9 @@ static GtkWidget* menu_bar_file_item() {
   GtkWidget* save_item = gtk_menu_item_new_with_label("Save");
   GtkWidget* saveas_item = gtk_menu_item_new_with_label("Save As");
 
-  mf_menu_item_add_menu_item(file_item, open_item);
-  mf_menu_item_add_menu_item(file_item, save_item);
-  mf_menu_item_add_menu_item(file_item, saveas_item);
+  hgtk_menu_item_add_menu_item(file_item, open_item);
+  hgtk_menu_item_add_menu_item(file_item, save_item);
+  hgtk_menu_item_add_menu_item(file_item, saveas_item);
 
   return file_item;
 }
@@ -54,15 +55,21 @@ static GtkWidget* about_window_init() {
   gtk_window_set_default_size(GTK_WINDOW(about_window), 480, 320);
   gtk_window_set_resizable(GTK_WINDOW(about_window), FALSE);
 
-  GtkWidget* text = gtk_label_new("Developer - Ryan V Ngo");
-  gtk_label_set_angle(GTK_LABEL(text), 23.8);
-  gtk_container_add(GTK_CONTAINER(about_window), text);
+  GtkWidget* grid = gtk_grid_new();
+  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
 
+  GtkWidget* about_text = gtk_label_new("Developer - Ryan V Ngo\nVersion - 0.0.1\nDate - 24/08/7");
+  gtk_label_set_justify(GTK_LABEL(about_text), GTK_JUSTIFY_CENTER);
+
+  gtk_grid_attach(GTK_GRID(grid), about_text, 0, 0, 1, 1);
+
+  gtk_container_add(GTK_CONTAINER(about_window), grid);
   return about_window;
 }
 
 static GtkWidget* menu_bar_help_item() {
-  GtkWidget* help_item = mf_menu_item_with_submenu_init("Help");
+  GtkWidget* help_item = hgtk_menu_item_with_submenu_init("Help");
 
   GtkWidget* about_window = about_window_init();
   GtkWidget* about_item = gtk_menu_item_new_with_label("About");
@@ -71,8 +78,8 @@ static GtkWidget* menu_bar_help_item() {
 
   GtkWidget* docs_item = gtk_menu_item_new_with_label("Docs");
 
-  mf_menu_item_add_menu_item(help_item, about_item);
-  mf_menu_item_add_menu_item(help_item, docs_item);
+  hgtk_menu_item_add_menu_item(help_item, about_item);
+  hgtk_menu_item_add_menu_item(help_item, docs_item);
 
   return help_item;
 }
