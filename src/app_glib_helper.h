@@ -3,7 +3,8 @@
 
 #include <gtk/gtk.h>
 
-GFile* hglib_get_file(GtkWidget* widget, gpointer data);
+char* hglib_get_absolute_path();
+char* hglib_saveas_absolute_path();
 
 
 #endif

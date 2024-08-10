@@ -1,9 +1,12 @@
 #include "fitsio.h"
 
 #include "main_menu_bar.h"
+
 #include "app_gtk_helper.h"
 #include "app_glib_helper.h"
-#include "gtk/gtk.h"
+#include "app_cfitsio_helper.h"
+
+#include "main_image_display.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);
@@ -21,29 +24,90 @@ static void on_window_activate(GtkWidget* menu_item, gpointer window) {
 /**************************************************/
 /* File */
 
-void open_item_activate(GtkWidget* menu_item, gpointer data) {
-  GFile* file = hglib_get_file(NULL, NULL);
-  if (!file) return;
-  char* filename = g_file_get_path(file);
+void open_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
+  char* file_absolute_path = hglib_get_absolute_path();
+  if (!file_absolute_path) return;
 
-  g_object_unref(file);
+  int status = 0;
+  fits_open_file(current_file_ptr, file_absolute_path, READONLY, &status);
+
+  if (*current_file_ptr && !status) {
+    g_print("File -> Open: %s\n", file_absolute_path);
+    main_image_display_load_new_image(current_file_ptr);
+  } else {
+    g_print("File -> Open: ERROR\n");
+    fits_report_error(stderr, status);
+  }
+
   return;
 }
 
-static GtkWidget* menu_bar_file_item() {
+void saveas_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
+  if (*current_file_ptr == NULL) return;
+
+  int status = 0;
+  char* saveas_absolute_path = hglib_saveas_absolute_path();
+
+  if (!saveas_absolute_path) return;
+  hcfitsio_save_file(current_file_ptr, saveas_absolute_path, &status);
+
+  if (!status) {
+    g_print("File -> Save As: %s\n", saveas_absolute_path);
+  } else {
+    fits_report_error(stderr, status);
+  }
+
+  return;
+}
+
+static GtkWidget* menu_bar_file_item(fitsfile** current_file_ptr) {
   GtkWidget* file_item = hgtk_menu_item_with_submenu_init("File");
 
   GtkWidget* open_item = gtk_menu_item_new_with_label("Open");
-  g_signal_connect(open_item, "activate", G_CALLBACK(open_item_activate), NULL);
+  g_signal_connect(open_item, "activate", G_CALLBACK(open_item_activate), current_file_ptr);
 
   GtkWidget* save_item = gtk_menu_item_new_with_label("Save");
+
   GtkWidget* saveas_item = gtk_menu_item_new_with_label("Save As");
+  g_signal_connect(saveas_item, "activate", G_CALLBACK(saveas_item_activate), current_file_ptr);
 
   hgtk_menu_item_add_menu_item(file_item, open_item);
   hgtk_menu_item_add_menu_item(file_item, save_item);
   hgtk_menu_item_add_menu_item(file_item, saveas_item);
 
   return file_item;
+}
+
+/**************************************************/
+/* Info */
+
+void headers_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
+  if (!*current_file_ptr) return;
+  int status = 0;
+  int card_count;
+
+  fits_get_hdrspace(*current_file_ptr, &card_count, NULL, &status);
+  if (status) return fits_report_error(stderr, status);
+
+  char card[FLEN_CARD];
+  int i = 1;
+  for(; i < card_count; i++) {
+    fits_read_record(*current_file_ptr, i, card, &status);
+    g_print("%s\n", card);
+  }
+
+  return;
+}
+
+static GtkWidget* menu_bar_info_item(fitsfile** current_file_ptr) {
+  GtkWidget* info_item = hgtk_menu_item_with_submenu_init("Info");
+
+  GtkWidget* headers_item = gtk_menu_item_new_with_label("Headers");
+  g_signal_connect(headers_item, "activate", G_CALLBACK(headers_item_activate), current_file_ptr);
+
+  hgtk_menu_item_add_menu_item(info_item, headers_item);
+
+  return info_item;
 }
 
 /**************************************************/
@@ -87,13 +151,15 @@ static GtkWidget* menu_bar_help_item() {
 /**************************************************/
 /* Menu Bar */
 
-GtkWidget* main_menu_bar_get() {
+GtkWidget* main_menu_bar_get(fitsfile** current_file) {
   GtkWidget* menu_bar = gtk_menu_bar_new();
   
-  GtkWidget* file_item = menu_bar_file_item();
+  GtkWidget* file_item = menu_bar_file_item(current_file);
   GtkWidget* help_item = menu_bar_help_item();
+  GtkWidget* info_item = menu_bar_info_item(current_file);
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), file_item);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), info_item);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), help_item);
 
   return menu_bar;

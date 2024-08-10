@@ -8,5 +8,5 @@ Description: FITS File Subroutine Library
 URL: https://heasarc.gsfc.nasa.gov/fitsio/
 Version: 4.4.1
 Libs: -L${libdir} -lcfitsio
-Libs.private:  -lz  -lm
+Libs.private:  -lpthread -lz  -lm
 Cflags: -I${includedir}
