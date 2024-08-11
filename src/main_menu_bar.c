@@ -6,6 +6,7 @@
 #include "app_glib_helper.h"
 #include "app_cfitsio_helper.h"
 
+#include "longnam.h"
 #include "main_image_display.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
@@ -29,7 +30,23 @@ void open_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
   if (!file_absolute_path) return;
 
   int status = 0;
-  fits_open_file(current_file_ptr, file_absolute_path, READONLY, &status);
+  fitsfile* temp_file_ptr;
+
+  fits_open_file(&temp_file_ptr, file_absolute_path, READONLY, &status);
+  if (status) {
+    fits_report_error(stderr, status);
+    return;
+  }
+
+  if (*current_file_ptr) {
+    fits_close_file(*current_file_ptr, &status);
+    if (status) {
+      fits_report_error(stderr, status);
+      return;
+    }
+  }
+
+  *current_file_ptr = temp_file_ptr;
 
   if (*current_file_ptr && !status) {
     g_print("File -> Open: %s\n", file_absolute_path);

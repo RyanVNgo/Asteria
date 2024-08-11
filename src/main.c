@@ -3,12 +3,15 @@
 
 #include "main_menu_bar.h"
 #include "main_image_display.h"
+#include "main_options_bar.h"
 
 static void asteria_activate(GtkApplication* app, gpointer userdata) {
   GtkWidget* window;
+  gint default_width = 1200;
+  gint default_height = 900;
   window = gtk_application_window_new(app);
   gtk_window_set_title(GTK_WINDOW(window), "Asteria");
-  gtk_window_set_default_size(GTK_WINDOW(window), 1280, 720);
+  gtk_window_set_default_size(GTK_WINDOW(window), default_width, default_height);
 
   GtkWidget* home_grid = gtk_grid_new();
   gtk_container_add(GTK_CONTAINER(window), home_grid);
@@ -17,8 +20,11 @@ static void asteria_activate(GtkApplication* app, gpointer userdata) {
   GtkWidget* menu_bar = main_menu_bar_get(&current_file);
   gtk_grid_attach(GTK_GRID(home_grid), menu_bar, 0, 0, 1, 1);
 
+  GtkWidget* options_bar = main_options_bar_get();
+  gtk_grid_attach(GTK_GRID(home_grid), options_bar, 0, 1, 1, 1);
+
   GtkWidget* image_display = main_image_display_get(&current_file);
-  gtk_grid_attach(GTK_GRID(home_grid), image_display, 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(home_grid), image_display, 0, 2, 1, 1);
 
   gtk_widget_show_all(window);
 }

@@ -4,10 +4,10 @@
 #include <gtk/gtk.h>
 #include "fitsio.h"
 
-static GtkWidget* image_box;
-static GtkWidget* image;
-
 GtkWidget* main_image_display_get(fitsfile** current_file_ptr);
 void main_image_display_load_new_image(fitsfile** current_file_ptr);
+
+void main_image_display_dec_image_scale(GtkWidget* button, gpointer* scale_label);
+void main_image_display_inc_image_scale(GtkWidget* button, gpointer* scale_label);
 
 #endif

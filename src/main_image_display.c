@@ -2,12 +2,27 @@
 
 #include "app_cfitsio_helper.h"
 #include "gdk-pixbuf/gdk-pixbuf.h"
+#include "glib-object.h"
+#include "glib.h"
+#include "gtk/gtk.h"
+
+static GtkWidget* image_scrolled_window;
+static GtkWidget* image;
+static GdkPixbuf* base_pixbuf;
 
 GtkWidget* main_image_display_get(fitsfile** current_file_ptr) {
-  image_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+  GtkWidget* image_grid = gtk_grid_new();
+
+  image_scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+  gtk_widget_set_hexpand(image_scrolled_window, TRUE);
+  gtk_widget_set_vexpand(image_scrolled_window, TRUE);
+
   image = gtk_image_new();
-  gtk_container_add(GTK_CONTAINER(image_box), image);
-  return image_box;
+
+  gtk_container_add(GTK_CONTAINER(image_scrolled_window), image);
+  gtk_grid_attach(GTK_GRID(image_grid), image_scrolled_window, 0, 1, 1, 1);
+  
+  return image_grid;
 }
 
 void main_image_display_load_new_image(fitsfile** current_file_ptr) {
@@ -23,7 +38,7 @@ void main_image_display_load_new_image(fitsfile** current_file_ptr) {
   hcfitsio_get_image_data(current_file_ptr, &img_data);
   hcfitsio_img_data_to_pixbuf_format(current_file_ptr, &img_data, &pixbuf_data, pixel_count);
 
-  GdkPixbuf* pixbuf = gdk_pixbuf_new_from_data(
+  base_pixbuf = gdk_pixbuf_new_from_data(
       pixbuf_data,
       GDK_COLORSPACE_RGB,
       FALSE,
@@ -40,7 +55,42 @@ void main_image_display_load_new_image(fitsfile** current_file_ptr) {
     image = NULL;
   }
 
-  gtk_image_set_from_pixbuf(GTK_IMAGE(image), pixbuf);
-  g_object_unref(pixbuf);
+  gtk_image_set_from_pixbuf(GTK_IMAGE(image), base_pixbuf);
+  return;
+}
+
+void main_image_display_dec_image_scale(GtkWidget* button, gpointer* scale_factor_ptr) {
+  float scale_factor = *(float*)(scale_factor_ptr);
+  if (!base_pixbuf) return;
+
+  if (scale_factor == 0.25) return;
+  scale_factor /= 2.0;
+
+  int scaled_width = gdk_pixbuf_get_width(base_pixbuf) * scale_factor;
+  int scaled_height = gdk_pixbuf_get_height(base_pixbuf) * scale_factor;
+  GdkPixbuf* scaled_pixbuf = gdk_pixbuf_scale_simple(base_pixbuf, scaled_width, scaled_height, GDK_INTERP_TILES);
+
+  gtk_image_set_from_pixbuf(GTK_IMAGE(image), scaled_pixbuf);
+
+  *(float*)(scale_factor_ptr) = scale_factor;
+  g_object_unref(scaled_pixbuf);
+  return;
+}
+
+void main_image_display_inc_image_scale(GtkWidget* button, gpointer* scale_factor_ptr) {
+  float scale_factor = *(float*)(scale_factor_ptr);
+  if (!base_pixbuf) return;
+
+  if (scale_factor == 4.0) return;
+  scale_factor *= 2.0;
+
+  int scaled_width = gdk_pixbuf_get_width(base_pixbuf) * scale_factor;
+  int scaled_height = gdk_pixbuf_get_height(base_pixbuf) * scale_factor;
+  GdkPixbuf* scaled_pixbuf = gdk_pixbuf_scale_simple(base_pixbuf, scaled_width, scaled_height, GDK_INTERP_TILES);
+
+  gtk_image_set_from_pixbuf(GTK_IMAGE(image), scaled_pixbuf);
+
+  *(float*)(scale_factor_ptr) = scale_factor;
+  g_object_unref(scaled_pixbuf);
   return;
 }
