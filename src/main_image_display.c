@@ -9,6 +9,7 @@
 static GtkWidget* image_scrolled_window;
 static GtkWidget* image;
 static GdkPixbuf* base_pixbuf;
+static guchar* pixbuf_data;
 
 GtkWidget* main_image_display_get(fitsfile** current_file_ptr) {
   GtkWidget* image_grid = gtk_grid_new();
@@ -32,10 +33,11 @@ void main_image_display_load_new_image(fitsfile** current_file_ptr) {
   if (status) return;
   
   float* img_data;
-  guchar *pixbuf_data;
   int pixel_count = width * height * channels;
 
   hcfitsio_get_image_data(current_file_ptr, &img_data);
+  
+  if (pixbuf_data) g_free(pixbuf_data);
   hcfitsio_img_data_to_pixbuf_format(current_file_ptr, &img_data, &pixbuf_data, pixel_count);
 
   base_pixbuf = gdk_pixbuf_new_from_data(
@@ -50,12 +52,8 @@ void main_image_display_load_new_image(fitsfile** current_file_ptr) {
       NULL
   );
 
-  if (!image) {
-    g_free(image);
-    image = NULL;
-  }
-
   gtk_image_set_from_pixbuf(GTK_IMAGE(image), base_pixbuf);
+  g_free(img_data);
   return;
 }
 
