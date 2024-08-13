@@ -1,9 +1,11 @@
 #include "threads.h"
 #include "glib.h"
+#include <bits/pthreadtypes.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <gtk/gtk.h>
+#include <stdatomic.h>
 
 /**************************************************/
 /* Task and Task Queue implementation */
@@ -94,11 +96,9 @@ void* worker_thread(void* arg) {
     pthread_mutex_unlock(&pool->queue_mutex);
 
     if (fetched_task) {
-      g_print("Thread executing task...\n");
       fetched_task->function(fetched_task->arg);
       free(fetched_task);
     }
-    g_print("Thread finished task.\n");
   }
 
   pthread_exit(NULL);
@@ -161,6 +161,48 @@ void thread_pool_shutdown(ThreadPool* pool) {
   pthread_cond_destroy(&pool->queue_cond);
 
   g_print("Destroyed thread pool.\n");
+  return;
+}
+
+/**************************************************/
+/* Thread monitor implementation */
+
+typedef struct ThreadMonitor {
+  pthread_mutex_t mutex;
+  pthread_cond_t cond;
+  atomic_int counter;
+  int thread_count;
+} ThreadMonitor;
+
+ThreadMonitor* thread_monitor_init(int thread_count) {
+  ThreadMonitor* new_thread_monitor = malloc(sizeof(ThreadMonitor));
+  pthread_mutex_init(&new_thread_monitor->mutex, NULL);
+  pthread_cond_init(&new_thread_monitor->cond, NULL);
+  new_thread_monitor->counter = 0;
+  new_thread_monitor->thread_count = thread_count;
+
+  return new_thread_monitor;
+}
+
+void thread_monitor_signal(ThreadMonitor* thread_monitor) {
+  pthread_mutex_lock(&thread_monitor->mutex);
+  thread_monitor->counter++;
+  pthread_cond_signal(&thread_monitor->cond);
+  pthread_mutex_unlock(&thread_monitor->mutex);
+}
+
+void thread_monitor_wait(ThreadMonitor* thread_monitor) {
+  pthread_mutex_lock(&thread_monitor->mutex);
+  while (thread_monitor->counter < thread_monitor->thread_count) {
+    pthread_cond_wait(&thread_monitor->cond, &thread_monitor->mutex);
+  }
+  pthread_mutex_unlock(&thread_monitor->mutex);
+}
+
+void thread_monitor_destroy(ThreadMonitor* thread_monitor) {
+  pthread_mutex_destroy(&thread_monitor->mutex);
+  pthread_cond_destroy(&thread_monitor->cond);
+  free(thread_monitor);
   return;
 }
 

@@ -22,6 +22,42 @@ int bitpix_to_datatype(int bitpix) {
   }
 }
 
+
+struct idtpbf_args {
+  ThreadMonitor* thread_monitor;
+  float** img_data;
+  guchar** pixbuf_data;
+  int channel;
+  int channel_size;
+  float scaler;
+} idtpbf_args;
+
+void img_data_to_pixbuf_format_thr(void* args) {
+  struct idtpbf_args* parsed_args = (struct idtpbf_args*)args;
+  ThreadMonitor* thread_monitor = parsed_args->thread_monitor;
+  float** img_data = parsed_args->img_data;
+  guchar** pixbuf_data = parsed_args->pixbuf_data;
+  int channel = parsed_args->channel;
+  int channel_size = parsed_args->channel_size;
+  float scaler = parsed_args->scaler;
+
+  const guchar guchar_max = 255;
+
+  float data_val = 0;
+  int norm_val = 0;
+  int i = channel;
+  for (int p = channel * channel_size; p < (channel+1) * channel_size; p++) {
+    data_val = (*img_data)[p] * scaler;
+    norm_val = data_val * guchar_max;
+    if (norm_val > guchar_max) norm_val = guchar_max;
+    (*pixbuf_data)[i] = norm_val;
+    i += 3;
+  }
+
+  thread_monitor_signal(thread_monitor);
+  return;
+}
+
 void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count) {
   const guchar guchar_max = 255;
 
@@ -53,17 +89,24 @@ void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** curr
 
   float scaler = 0.1 / avg_val;
 
-  for (int c = 0; c < naxes[2]; c++) {
-    int i = c;
-    for (int p = c * channel_size; p < (c+1) * channel_size; p++) {
-      data_val = (*img_data)[p] * scaler;
-      norm_val = data_val * guchar_max;
-      if (norm_val > guchar_max) norm_val = guchar_max;
-      (*pixbuf_data)[i] = norm_val;
-      i += 3;
-    }
+  int task_count = 3;
+  ThreadMonitor* thread_monitor = thread_monitor_init(task_count);
+  struct idtpbf_args* task_args[3];
+
+  
+  for (int i = 0; i < naxes[2]; i++) {
+    task_args[i] = malloc(sizeof(struct idtpbf_args));
+    task_args[i]->thread_monitor = thread_monitor;
+    task_args[i]->img_data = img_data;
+    task_args[i]->pixbuf_data = pixbuf_data;
+    task_args[i]->channel = i;
+    task_args[i]->channel_size = channel_size;
+    task_args[i]->scaler = scaler;
+    submit_task(thread_pool, img_data_to_pixbuf_format_thr, task_args[i]);
   }
 
+  thread_monitor_wait(thread_monitor);
+  thread_monitor_destroy(thread_monitor);
   return;
 }
 
