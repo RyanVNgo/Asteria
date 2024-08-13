@@ -1,13 +1,12 @@
 #include "fitsio.h"
 
 #include "main_menu_bar.h"
+#include "main_image_display.h"
 
 #include "app_gtk_helper.h"
 #include "app_glib_helper.h"
 #include "app_cfitsio_helper.h"
-
-#include "longnam.h"
-#include "main_image_display.h"
+#include "shared_data.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);
@@ -25,7 +24,7 @@ static void on_window_activate(GtkWidget* menu_item, gpointer window) {
 /**************************************************/
 /* File */
 
-void open_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
+void open_item_activate(GtkWidget* menu_item, SharedData* shared_data) {
   char* file_absolute_path = hglib_get_absolute_path();
   if (!file_absolute_path) return;
 
@@ -38,19 +37,19 @@ void open_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
     return;
   }
 
-  if (*current_file_ptr) {
-    fits_close_file(*current_file_ptr, &status);
+  if (shared_data->current_file) {
+    fits_close_file(shared_data->current_file, &status);
     if (status) {
       fits_report_error(stderr, status);
       return;
     }
   }
 
-  *current_file_ptr = temp_file_ptr;
+  shared_data->current_file = temp_file_ptr;
 
-  if (*current_file_ptr && !status) {
+  if (shared_data->current_file && !status) {
     g_print("File -> Open: %s\n", file_absolute_path);
-    main_image_display_load_new_image(current_file_ptr);
+    main_image_display_load_new_image(shared_data->thread_pool, &shared_data->current_file);
   } else {
     g_print("File -> Open: ERROR\n");
     fits_report_error(stderr, status);
@@ -59,14 +58,14 @@ void open_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
   return;
 }
 
-void saveas_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
-  if (*current_file_ptr == NULL) return;
+void saveas_item_activate(GtkWidget* menu_item, SharedData* shared_data) {
+  if (shared_data->current_file == NULL) return;
 
   int status = 0;
   char* saveas_absolute_path = hglib_saveas_absolute_path();
 
   if (!saveas_absolute_path) return;
-  hcfitsio_save_file(current_file_ptr, saveas_absolute_path, &status);
+  hcfitsio_save_file(&shared_data->current_file, saveas_absolute_path, &status);
 
   if (!status) {
     g_print("File -> Save As: %s\n", saveas_absolute_path);
@@ -77,16 +76,16 @@ void saveas_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
   return;
 }
 
-static GtkWidget* menu_bar_file_item(fitsfile** current_file_ptr) {
+static GtkWidget* menu_bar_file_item(SharedData* shared_data) {
   GtkWidget* file_item = hgtk_menu_item_with_submenu_init("File");
 
   GtkWidget* open_item = gtk_menu_item_new_with_label("Open");
-  g_signal_connect(open_item, "activate", G_CALLBACK(open_item_activate), current_file_ptr);
+  g_signal_connect(open_item, "activate", G_CALLBACK(open_item_activate), shared_data);
 
   GtkWidget* save_item = gtk_menu_item_new_with_label("Save");
 
   GtkWidget* saveas_item = gtk_menu_item_new_with_label("Save As");
-  g_signal_connect(saveas_item, "activate", G_CALLBACK(saveas_item_activate), current_file_ptr);
+  g_signal_connect(saveas_item, "activate", G_CALLBACK(saveas_item_activate), shared_data);
 
   hgtk_menu_item_add_menu_item(file_item, open_item);
   hgtk_menu_item_add_menu_item(file_item, save_item);
@@ -168,12 +167,12 @@ static GtkWidget* menu_bar_help_item() {
 /**************************************************/
 /* Menu Bar */
 
-GtkWidget* main_menu_bar_get(fitsfile** current_file) {
+GtkWidget* main_menu_bar_get(SharedData* shared_data) {
   GtkWidget* menu_bar = gtk_menu_bar_new();
   
-  GtkWidget* file_item = menu_bar_file_item(current_file);
+  GtkWidget* file_item = menu_bar_file_item(shared_data);
   GtkWidget* help_item = menu_bar_help_item();
-  GtkWidget* info_item = menu_bar_info_item(current_file);
+  GtkWidget* info_item = menu_bar_info_item(&shared_data->current_file);
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), file_item);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), info_item);

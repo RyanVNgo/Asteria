@@ -1,10 +1,11 @@
 #include "main_image_display.h"
 
+#include "main_options_bar.h"
+
 #include "app_cfitsio_helper.h"
-#include "gdk-pixbuf/gdk-pixbuf.h"
-#include "glib-object.h"
-#include "glib.h"
-#include "gtk/gtk.h"
+
+#include "threads.h"
+#include <pthread.h>
 
 static GtkWidget* image_scrolled_window;
 static GtkWidget* image;
@@ -26,7 +27,7 @@ GtkWidget* main_image_display_get(fitsfile** current_file_ptr) {
   return image_grid;
 }
 
-void main_image_display_load_new_image(fitsfile** current_file_ptr) {
+void main_image_display_load_new_image(ThreadPool* thread_pool, fitsfile** current_file_ptr) {
   int status = 0;
   int width = 0, height = 0, channels = 0;
   hcfitsio_get_image_dimensions(current_file_ptr, &width, &height, &channels, &status);
@@ -38,8 +39,10 @@ void main_image_display_load_new_image(fitsfile** current_file_ptr) {
   hcfitsio_get_image_data(current_file_ptr, &img_data);
   
   if (pixbuf_data) g_free(pixbuf_data);
-  hcfitsio_img_data_to_pixbuf_format(current_file_ptr, &img_data, &pixbuf_data, pixel_count);
-
+  pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
+  
+  hcfitsio_img_data_to_pixbuf_format(thread_pool, current_file_ptr, &img_data, &pixbuf_data, pixel_count);
+  
   base_pixbuf = gdk_pixbuf_new_from_data(
       pixbuf_data,
       GDK_COLORSPACE_RGB,
@@ -53,13 +56,17 @@ void main_image_display_load_new_image(fitsfile** current_file_ptr) {
   );
 
   gtk_image_set_from_pixbuf(GTK_IMAGE(image), base_pixbuf);
+  main_options_bar_reset_scale_factor();
+  
   g_free(img_data);
   return;
 }
 
-void main_image_display_dec_image_scale(GtkWidget* button, gpointer* scale_factor_ptr) {
+void main_image_display_dec_image_scale(void* scale_factor_ptr) {
   float scale_factor = *(float*)(scale_factor_ptr);
-  if (!base_pixbuf) return;
+  if (!base_pixbuf) {
+    return;
+  }
 
   if (scale_factor == 0.25) return;
   scale_factor /= 2.0;
@@ -75,7 +82,7 @@ void main_image_display_dec_image_scale(GtkWidget* button, gpointer* scale_facto
   return;
 }
 
-void main_image_display_inc_image_scale(GtkWidget* button, gpointer* scale_factor_ptr) {
+void main_image_display_inc_image_scale(void* scale_factor_ptr) {
   float scale_factor = *(float*)(scale_factor_ptr);
   if (!base_pixbuf) return;
 

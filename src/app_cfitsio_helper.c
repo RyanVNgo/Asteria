@@ -1,7 +1,7 @@
 #include "app_cfitsio_helper.h"
+
 #include "fitsio.h"
-#include "glib.h"
-#include "longnam.h"
+#include "threads.h"
 
 int bitpix_to_datatype(int bitpix) {
   switch(bitpix) {
@@ -22,12 +22,13 @@ int bitpix_to_datatype(int bitpix) {
   }
 }
 
-void hcfitsio_img_data_to_pixbuf_format(fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count) {
-  *pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
+void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count) {
+  const guchar guchar_max = 255;
 
   int maxdim = 0;
   int status = 0;
   fits_get_img_dim(*current_file_ptr, &maxdim, &status);
+
   if (status) {
     fits_report_error(stderr, status);
     return;
@@ -56,8 +57,8 @@ void hcfitsio_img_data_to_pixbuf_format(fitsfile** current_file_ptr, float** img
     int i = c;
     for (int p = c * channel_size; p < (c+1) * channel_size; p++) {
       data_val = (*img_data)[p] * scaler;
-      norm_val = data_val * 255;
-      if (norm_val > 255) norm_val = 255;
+      norm_val = data_val * guchar_max;
+      if (norm_val > guchar_max) norm_val = guchar_max;
       (*pixbuf_data)[i] = norm_val;
       i += 3;
     }
@@ -65,6 +66,7 @@ void hcfitsio_img_data_to_pixbuf_format(fitsfile** current_file_ptr, float** img
 
   return;
 }
+
 
 void hcfitsio_save_file(fitsfile** current_file_ptr, const char* absolute_path, int* status) {
   fitsfile* new_fptr;
