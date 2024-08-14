@@ -1,7 +1,10 @@
 #include "app_cfitsio_helper.h"
 
 #include "fitsio.h"
+#include "main_image_display.h"
 #include "threads.h"
+
+#include <math.h>
 
 int bitpix_to_datatype(int bitpix) {
   switch(bitpix) {
@@ -29,8 +32,21 @@ struct idtpbf_args {
   guchar** pixbuf_data;
   int channel;
   int channel_size;
-  float scaler;
+  enum PreviewMode preview_mode;
 } idtpbf_args;
+
+float linear_scale_func(float data_val) {
+  return data_val;
+}
+float logarithm_scale_func(float data_val) {
+  return data_val;
+}
+float square_root_scale_func(float data_val) {
+  return sqrt(data_val);
+}
+float autostretch_root_scale_func(float data_val) {
+  return data_val;
+}
 
 void img_data_to_pixbuf_format_thr(void* args) {
   struct idtpbf_args* parsed_args = (struct idtpbf_args*)args;
@@ -39,18 +55,36 @@ void img_data_to_pixbuf_format_thr(void* args) {
   guchar** pixbuf_data = parsed_args->pixbuf_data;
   int channel = parsed_args->channel;
   int channel_size = parsed_args->channel_size;
-  float scaler = parsed_args->scaler;
+  enum PreviewMode preview_mode = parsed_args->preview_mode;
 
   const guchar guchar_max = 255;
 
+  float (*scaling_func)(float);
+  switch (preview_mode) {
+    case LINEAR:
+      scaling_func = linear_scale_func;
+      break;
+    case LOGARITHM:
+      scaling_func = logarithm_scale_func;
+      break;
+    case SQUARE_ROOT:
+      scaling_func = square_root_scale_func;
+      break;
+    case AUTOSTRETCH:
+      scaling_func = autostretch_root_scale_func;
+      break;
+    default:
+      scaling_func = linear_scale_func;
+  }
+
   float data_val = 0;
-  int norm_val = 0;
+  int pixbuf_val= 0;
   int i = channel;
   for (int p = channel * channel_size; p < (channel+1) * channel_size; p++) {
-    data_val = (*img_data)[p] * scaler;
-    norm_val = data_val * guchar_max;
-    if (norm_val > guchar_max) norm_val = guchar_max;
-    (*pixbuf_data)[i] = norm_val;
+    data_val = scaling_func((*img_data)[p]);
+    pixbuf_val = data_val * guchar_max;
+    if (pixbuf_val > guchar_max) pixbuf_val = guchar_max;
+    (*pixbuf_data)[i] = pixbuf_val;
     i += 3;
   }
 
@@ -58,7 +92,7 @@ void img_data_to_pixbuf_format_thr(void* args) {
   return;
 }
 
-void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count) {
+void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode) {
   const guchar guchar_max = 255;
 
   int maxdim = 0;
@@ -80,14 +114,6 @@ void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** curr
   int channel_size = naxes[0] * naxes[1];
   float data_val = 0;
   int norm_val = 0;
-  
-  float avg_val = 0;
-  for (int i = 0; i < pixel_count; i++) {
-    avg_val += (*img_data)[i];
-  }
-  avg_val /= pixel_count;
-
-  float scaler = 0.1 / avg_val;
 
   int task_count = 3;
   ThreadMonitor* thread_monitor = thread_monitor_init(task_count);
@@ -101,7 +127,7 @@ void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** curr
     task_args[i]->pixbuf_data = pixbuf_data;
     task_args[i]->channel = i;
     task_args[i]->channel_size = channel_size;
-    task_args[i]->scaler = scaler;
+    task_args[i]->preview_mode = preview_mode;
     submit_task(thread_pool, img_data_to_pixbuf_format_thr, task_args[i]);
   }
 

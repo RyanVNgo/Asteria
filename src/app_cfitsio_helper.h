@@ -11,6 +11,6 @@ void hcfitsio_get_image_dimensions(fitsfile** current_file_ptr, int* width, int*
 
 void hcfitsio_get_image_data(fitsfile** current_file_ptr, float** image_data);
 
-void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count);
+void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode);
 
 #endif

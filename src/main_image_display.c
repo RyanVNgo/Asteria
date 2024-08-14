@@ -11,6 +11,7 @@ static GtkWidget* image_scrolled_window;
 static GtkWidget* image;
 static GdkPixbuf* base_pixbuf;
 static guchar* pixbuf_data;
+static enum PreviewMode preview_mode = LINEAR;
 
 GtkWidget* main_image_display_get(fitsfile** current_file_ptr) {
   GtkWidget* image_grid = gtk_grid_new();
@@ -28,6 +29,8 @@ GtkWidget* main_image_display_get(fitsfile** current_file_ptr) {
 }
 
 void main_image_display_load_new_image(ThreadPool* thread_pool, fitsfile** current_file_ptr) {
+  if (!*current_file_ptr) return;
+
   int status = 0;
   int width = 0, height = 0, channels = 0;
   hcfitsio_get_image_dimensions(current_file_ptr, &width, &height, &channels, &status);
@@ -41,7 +44,8 @@ void main_image_display_load_new_image(ThreadPool* thread_pool, fitsfile** curre
   if (pixbuf_data) g_free(pixbuf_data);
   pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
   
-  hcfitsio_img_data_to_pixbuf_format(thread_pool, current_file_ptr, &img_data, &pixbuf_data, pixel_count);
+  g_print("Preview mode: %d\n", preview_mode);
+  hcfitsio_img_data_to_pixbuf_format(thread_pool, current_file_ptr, &img_data, &pixbuf_data, pixel_count, preview_mode);
   
   base_pixbuf = gdk_pixbuf_new_from_data(
       pixbuf_data,
@@ -97,5 +101,15 @@ void main_image_display_inc_image_scale(void* scale_factor_ptr) {
 
   *(float*)(scale_factor_ptr) = scale_factor;
   g_object_unref(scaled_pixbuf);
+  return;
+}
+
+void main_image_display_set_preview_mode(enum PreviewMode preview_mode_in) {
+  if (preview_mode_in == LINEAR ||
+      preview_mode_in == LOGARITHM ||
+      preview_mode_in == SQUARE_ROOT ||
+      preview_mode_in == AUTOSTRETCH ) {
+    preview_mode = preview_mode_in;
+  }
   return;
 }
