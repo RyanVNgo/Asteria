@@ -2,7 +2,7 @@
 #define MAIN_MENU_BAR_H
 
 #include <gtk/gtk.h>
-#include "shared_data.h"
+#include "../shared_data.h"
 
 GtkWidget* main_menu_bar_get(SharedData* shared_data);
 

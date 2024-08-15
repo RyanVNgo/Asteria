@@ -1,11 +1,7 @@
 #include "main_image_display.h"
 
 #include "main_options_bar.h"
-
-#include "app_cfitsio_helper.h"
-
-#include "threads.h"
-#include <pthread.h>
+#include "../helpers/app_cfitsio_helper.h"
 
 static GtkWidget* image_scrolled_window;
 static GtkWidget* image;
@@ -44,7 +40,6 @@ void main_image_display_load_new_image(ThreadPool* thread_pool, fitsfile** curre
   if (pixbuf_data) g_free(pixbuf_data);
   pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
   
-  g_print("Preview mode: %d\n", preview_mode);
   hcfitsio_img_data_to_pixbuf_format(thread_pool, current_file_ptr, &img_data, &pixbuf_data, pixel_count, preview_mode);
   
   base_pixbuf = gdk_pixbuf_new_from_data(

@@ -1,12 +1,11 @@
+#include "main_menu_bar.h"
+
 #include "fitsio.h"
 
-#include "main_menu_bar.h"
 #include "main_image_display.h"
-
-#include "app_gtk_helper.h"
-#include "app_glib_helper.h"
-#include "app_cfitsio_helper.h"
-#include "shared_data.h"
+#include "../helpers/app_gtk_helper.h"
+#include "../helpers/app_glib_helper.h"
+#include "../helpers/app_cfitsio_helper.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);

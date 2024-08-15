@@ -2,7 +2,7 @@
 #define MAIN_OPTIONS_BAR_H
 
 #include "gtk/gtk.h"
-#include "shared_data.h"
+#include "../shared_data.h"
 
 void main_options_bar_reset_scale_factor();
 

@@ -1,9 +1,10 @@
 #ifndef MAIN_IMAGE_DISPLAY_H
 #define MAIN_IMAGE_DISPLAY_H
 
-#include <gtk/gtk.h>
-#include "threads.h"
 #include "fitsio.h"
+#include <gtk/gtk.h>
+
+#include "../threads.h"
 
 enum PreviewMode {
   LINEAR,

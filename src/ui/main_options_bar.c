@@ -1,12 +1,9 @@
 #include "main_options_bar.h"
 
-#include "glib-object.h"
-#include "glib.h"
 #include "gtk/gtk.h"
-#include "shared_data.h"
+#include <string.h>
 
 #include "main_image_display.h"
-#include <string.h>
 
 static float scale_factor;
 

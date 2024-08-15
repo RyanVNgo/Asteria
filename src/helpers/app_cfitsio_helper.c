@@ -1,10 +1,10 @@
 #include "app_cfitsio_helper.h"
 
 #include "fitsio.h"
-#include "main_image_display.h"
-#include "threads.h"
-
 #include <math.h>
+
+#include "../threads.h"
+#include "../ui/main_image_display.h"
 
 int bitpix_to_datatype(int bitpix) {
   switch(bitpix) {

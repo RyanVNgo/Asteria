@@ -1,5 +1,5 @@
-#ifndef FILE_HANDLER_H
-#define FILE_HANDLER_H
+#ifndef APP_GLIB_HELPER_H
+#define APP_GLIB_HELPER_H
 
 #include <gtk/gtk.h>
 

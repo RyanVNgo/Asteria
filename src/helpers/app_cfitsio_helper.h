@@ -1,10 +1,10 @@
 #ifndef APP_CFITSIO_HELPER_H
 #define APP_CFITSIO_HELPER_H
 
-#include <pthread.h>
 #include <gtk/gtk.h>
 #include "fitsio.h"
-#include "threads.h"
+
+#include "../threads.h"
 
 void hcfitsio_save_file(fitsfile** current_file_ptr, const char* root_filename, int* status);
 void hcfitsio_get_image_dimensions(fitsfile** current_file_ptr, int* width, int* height, int* channels, int* status);

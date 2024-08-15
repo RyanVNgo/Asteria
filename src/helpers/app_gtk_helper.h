@@ -1,5 +1,5 @@
-#ifndef MENU_FACTORY_H
-#define MENU_FACTORY_H
+#ifndef APP_GTK_HELPER_H
+#define APP_GTK_HELPER_H
 
 #include <gtk/gtk.h>
 
