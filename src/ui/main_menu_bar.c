@@ -2,10 +2,10 @@
 
 #include "fitsio.h"
 
+#include "longnam.h"
 #include "main_image_display.h"
+#include "../controllers/file_controller.h"
 #include "../helpers/app_gtk_helper.h"
-#include "../helpers/app_glib_helper.h"
-#include "../helpers/app_cfitsio_helper.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);
@@ -24,54 +24,15 @@ static void on_window_activate(GtkWidget* menu_item, gpointer window) {
 /* File */
 
 void open_item_activate(GtkWidget* menu_item, SharedData* shared_data) {
-  char* file_absolute_path = hglib_get_absolute_path();
-  if (!file_absolute_path) return;
-
-  int status = 0;
-  fitsfile* temp_file_ptr;
-
-  fits_open_file(&temp_file_ptr, file_absolute_path, READONLY, &status);
-  if (status) {
-    fits_report_error(stderr, status);
-    return;
-  }
-
+  get_fitsfile(&shared_data->current_file);
   if (shared_data->current_file) {
-    fits_close_file(shared_data->current_file, &status);
-    if (status) {
-      fits_report_error(stderr, status);
-      return;
-    }
-  }
-
-  shared_data->current_file = temp_file_ptr;
-
-  if (shared_data->current_file && !status) {
-    g_print("File -> Open: %s\n", file_absolute_path);
     main_image_display_load_new_image(shared_data->thread_pool, &shared_data->current_file);
-  } else {
-    g_print("File -> Open: ERROR\n");
-    fits_report_error(stderr, status);
-  }
-
+  } 
   return;
 }
 
 void saveas_item_activate(GtkWidget* menu_item, SharedData* shared_data) {
-  if (shared_data->current_file == NULL) return;
-
-  int status = 0;
-  char* saveas_absolute_path = hglib_saveas_absolute_path();
-
-  if (!saveas_absolute_path) return;
-  hcfitsio_save_file(&shared_data->current_file, saveas_absolute_path, &status);
-
-  if (!status) {
-    g_print("File -> Save As: %s\n", saveas_absolute_path);
-  } else {
-    fits_report_error(stderr, status);
-  }
-
+  save_as_fitsfile(shared_data->current_file);
   return;
 }
 

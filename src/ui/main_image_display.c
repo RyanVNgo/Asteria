@@ -19,7 +19,7 @@ GtkWidget* main_image_display_get(fitsfile** current_file_ptr) {
   image = gtk_image_new();
 
   gtk_container_add(GTK_CONTAINER(image_scrolled_window), image);
-  gtk_grid_attach(GTK_GRID(image_grid), image_scrolled_window, 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(image_grid), image_scrolled_window, 0, 0, 1, 1);
   
   return image_grid;
 }
@@ -101,7 +101,6 @@ void main_image_display_inc_image_scale(void* scale_factor_ptr) {
 
 void main_image_display_set_preview_mode(enum PreviewMode preview_mode_in) {
   if (preview_mode_in == LINEAR ||
-      preview_mode_in == LOGARITHM ||
       preview_mode_in == SQUARE_ROOT ||
       preview_mode_in == AUTOSTRETCH ) {
     preview_mode = preview_mode_in;

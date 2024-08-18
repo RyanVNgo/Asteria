@@ -4,11 +4,10 @@
 #include "fitsio.h"
 #include <gtk/gtk.h>
 
-#include "../threads.h"
+#include "../core/threads.h"
 
 enum PreviewMode {
   LINEAR,
-  LOGARITHM,
   SQUARE_ROOT,
   AUTOSTRETCH
 };

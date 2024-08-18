@@ -7,12 +7,17 @@ LDFLAGS = -Wl,-rpath,$(CFITSIO_LIBPATH)
 LDFLAGS += $(foreach dir, $(wildcard lib/*), -L$(dir)) `pkg-config --cflags --libs gtk+-3.0` -lcfitsio -lm
 
 SRC_DIR = src
+CORE_DIR = $(SRC_DIR)/core
 UI_DIR = $(SRC_DIR)/ui
+CONTROLLERS_DIR = $(SRC_DIR)/controllers
 HELPERS_DIR = $(SRC_DIR)/helpers
 
+CORE_SRCS = $(wildcard $(CORE_DIR)/*.c)
 UI_SRCS = $(wildcard $(UI_DIR)/*.c)
+CONTROLLERS_SRCS = $(wildcard $(CONTROLLERS_DIR)/*.c)
 HELPERS_SRCS = $(wildcard $(HELPERS_DIR)/*.c)
-SOURCES = $(wildcard $(SRC_DIR)/*.c) $(HELPERS_SRCS) $(UI_SRCS)
+
+SOURCES = $(CORE_SRCS) $(UI_SRCS) $(CONTROLLERS_SRCS) $(HELPERS_SRCS) 
 
 OBJ_DIR = obj
 OBJECTS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SOURCES))

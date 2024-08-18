@@ -1,9 +1,12 @@
+/* primary header include */
 #include "app_cfitsio_helper.h"
 
+/* external libraries */
 #include "fitsio.h"
 #include <math.h>
 
-#include "../threads.h"
+/* project files */
+#include "../core/threads.h"
 #include "../ui/main_image_display.h"
 
 int bitpix_to_datatype(int bitpix) {
@@ -24,7 +27,6 @@ int bitpix_to_datatype(int bitpix) {
       return -1;
   }
 }
-
 
 struct idtpbf_args {
   ThreadMonitor* thread_monitor;
@@ -63,9 +65,6 @@ void img_data_to_pixbuf_format_thr(void* args) {
   switch (preview_mode) {
     case LINEAR:
       scaling_func = linear_scale_func;
-      break;
-    case LOGARITHM:
-      scaling_func = logarithm_scale_func;
       break;
     case SQUARE_ROOT:
       scaling_func = square_root_scale_func;
@@ -136,21 +135,6 @@ void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** curr
   return;
 }
 
-
-void hcfitsio_save_file(fitsfile** current_file_ptr, const char* absolute_path, int* status) {
-  fitsfile* new_fptr;
-
-  fits_create_file(&new_fptr, absolute_path, status);
-  if (*status == FILE_NOT_CREATED) {
-    char* modified_absolute_path = g_strdup_printf("!%s", absolute_path);
-    fits_create_file(&new_fptr, modified_absolute_path, status);
-  }
-  fits_copy_file(*current_file_ptr, new_fptr, 1, 1, 1, status);
-
-  fits_close_file(new_fptr, status);
-  return;
-}
-
 void hcfitsio_get_image_dimensions(fitsfile** current_file_ptr, int* width, int* height, int* channels, int* status) {
   if (!*current_file_ptr) return;
   
@@ -195,6 +179,40 @@ void hcfitsio_get_image_data(fitsfile** current_file_ptr, float** image_data) {
   *image_data = (float*)malloc(n_elements * sizeof(float));
   fits_read_pix(*current_file_ptr, data_type, naxis_start, n_elements, NULL, *image_data, NULL, &status);
 
+  return;
+}
+
+void hcfitsio_open_file(fitsfile** fitsfile_ptr, char* fitsfile_absolute_path) {
+  int status = 0;
+  
+  if (*fitsfile_ptr) {
+    fits_close_file(*fitsfile_ptr, &status);
+  }
+  
+  fits_open_file(fitsfile_ptr, fitsfile_absolute_path, READONLY, &status);
+
+  if (status) {
+    fits_report_error(stderr, status);
+    fitsfile_ptr = NULL;
+  }
+
+  return;
+}
+
+void hcfitsio_save_as_file(fitsfile* fitsfile_ptr, char* fitsfile_absolute_path) {
+  int status = 0;
+  fitsfile* new_fptr;
+
+  fits_create_file(&new_fptr, fitsfile_absolute_path, &status);
+  
+  /* case for when file path already exists (overwriting an existing file) */
+  if (status == FILE_NOT_CREATED) {
+    char* modified_absolute_path = g_strdup_printf("!%s", fitsfile_absolute_path);
+    fits_create_file(&new_fptr, modified_absolute_path, &status);
+  }
+  fits_copy_file(fitsfile_ptr, new_fptr, 1, 1, 1, &status);
+  
+  fits_close_file(new_fptr, &status);
   return;
 }
 

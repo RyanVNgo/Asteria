@@ -3,9 +3,9 @@
 
 #include "threads.h"
 #include "shared_data.h"
-#include "ui/main_image_display.h"
-#include "ui/main_menu_bar.h"
-#include "ui/main_options_bar.h"
+#include "../ui/main_image_display.h"
+#include "../ui/main_menu_bar.h"
+#include "../ui/main_options_bar.h"
 
 static void asteria_activate(GtkApplication* app, gpointer thread_pool_in) {
   ThreadPool* thread_pool = (ThreadPool*)thread_pool_in;

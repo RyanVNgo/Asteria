@@ -59,9 +59,6 @@ void change_preview_mode_label(GtkWidget* set_widget, gpointer preview_mode_menu
   if (!strcmp(label, "Linear")) {
     gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Linear");
     main_image_display_set_preview_mode(LINEAR);
-  } else if (!strcmp(label, "Logarithm")) {
-    gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Logarithm");
-    main_image_display_set_preview_mode(LOGARITHM);
   } else if (!strcmp(label, "Square Root")) {
     gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Square Root");
     main_image_display_set_preview_mode(SQUARE_ROOT);
@@ -90,10 +87,6 @@ GtkWidget* preview_mode_widgets_get(SharedData* shared_data) {
   g_signal_connect(set_linear, "activate", G_CALLBACK(change_preview_mode_label), preview_mode_menu_button);
   g_signal_connect(set_linear, "activate", G_CALLBACK(update_image_preview), shared_data);
 
-  GtkWidget* set_logarithm = gtk_menu_item_new_with_label("Logarithm");
-  g_signal_connect(set_logarithm, "activate", G_CALLBACK(change_preview_mode_label), preview_mode_menu_button);
-  g_signal_connect(set_logarithm, "activate", G_CALLBACK(update_image_preview), shared_data);
-
   GtkWidget* set_square_root = gtk_menu_item_new_with_label("Square Root");
   g_signal_connect(set_square_root, "activate", G_CALLBACK(change_preview_mode_label), preview_mode_menu_button);
   g_signal_connect(set_square_root, "activate", G_CALLBACK(update_image_preview), shared_data);
@@ -103,7 +96,6 @@ GtkWidget* preview_mode_widgets_get(SharedData* shared_data) {
   g_signal_connect(set_autostretch, "activate", G_CALLBACK(update_image_preview), shared_data);
 
   gtk_menu_shell_append(GTK_MENU_SHELL(preview_mode_menu), set_linear);
-  gtk_menu_shell_append(GTK_MENU_SHELL(preview_mode_menu), set_logarithm);
   gtk_menu_shell_append(GTK_MENU_SHELL(preview_mode_menu), set_square_root);
   gtk_menu_shell_append(GTK_MENU_SHELL(preview_mode_menu), set_autostretch);
 
