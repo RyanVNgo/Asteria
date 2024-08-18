@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
   int status;
   
   ThreadPool* thread_pool;
-  const int max_threads = 3; /* This must always be greater than 0 */
+  const int max_threads = 2; /* This must always be greater than 0 */
   thread_pool = thread_pool_init(max_threads);
   
   app = gtk_application_new("org.gtk.asteria", G_APPLICATION_DEFAULT_FLAGS);

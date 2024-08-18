@@ -90,6 +90,7 @@ void img_data_to_pixbuf_format_thr(void* args) {
   return;
 }
 
+#include <time.h>
 void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode) {
   const guchar guchar_max = 255;
 
@@ -116,8 +117,8 @@ void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** curr
   int task_count = 3;
   ThreadMonitor* thread_monitor = thread_monitor_init(task_count);
   struct idtpbf_args* task_args[3];
-
   
+  clock_t start = clock();
   for (int i = 0; i < naxes[2]; i++) {
     task_args[i] = malloc(sizeof(struct idtpbf_args));
     task_args[i]->thread_monitor = thread_monitor;
@@ -130,51 +131,35 @@ void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** curr
   }
 
   thread_monitor_wait(thread_monitor);
+
+  clock_t end = clock();
+  int msec_time = (end - start) * 1000 / CLOCKS_PER_SEC;
+  g_print("Exec time: %d milliseconds.\n", msec_time);
+
   thread_monitor_destroy(thread_monitor);
-  return;
-}
-
-void hcfitsio_get_image_dimensions(fitsfile** current_file_ptr, int* width, int* height, int* channels, int* status) {
-  if (!*current_file_ptr) return;
-  
-  int maxdim = 0;
-  fits_get_img_dim(*current_file_ptr, &maxdim, status);
-  if (*status) {
-    fits_report_error(stderr, *status);
-    return;
-  }
-
-  long naxes[maxdim];
-  fits_get_img_size(*current_file_ptr, maxdim, naxes, status);
-  if (*status) {
-    fits_report_error(stderr, *status);
-    return;
-  }
-
-  *width = (int)naxes[0];
-  *height = (int)naxes[1];
-  *channels = (int)naxes[2];
-
   return;
 }
 
 void hcfitsio_get_image_data(fitsfile** current_file_ptr, float** image_data) {
   int status = 0;
-  int width = 0, height = 0, channels = 0;
-  hcfitsio_get_image_dimensions(current_file_ptr, &width, &height, &channels, &status);
+  
+  /* get total number of pixels */
+  int naxis = 0;
+  fits_get_img_dim(*current_file_ptr, &naxis, &status);
+  long naxes[naxis];
+  fits_get_img_size(*current_file_ptr, naxis, naxes, &status);
+  LONGLONG n_elements = 1;
+  for (int dim = 0; dim < naxis; dim++) {
+    n_elements *= naxes[dim];
+  }
 
-  int chdunum = 0;
-  fits_get_hdu_num(*current_file_ptr, &chdunum);
-
-  fits_movabs_hdu(*current_file_ptr, 1, NULL, &status);
-
-  long naxis_start[3] = {1, 1, 1};
-  LONGLONG n_elements = width * height * channels;
-
+  /* get data type of fits file */
   int bitpix;
   fits_get_img_type(*current_file_ptr, &bitpix, &status);
-
   int data_type = bitpix_to_datatype(bitpix);
+
+  /* extract raw data from fits file */
+  long naxis_start[3] = {1, 1, 1};
   *image_data = (float*)malloc(n_elements * sizeof(float));
   fits_read_pix(*current_file_ptr, data_type, naxis_start, n_elements, NULL, *image_data, NULL, &status);
 

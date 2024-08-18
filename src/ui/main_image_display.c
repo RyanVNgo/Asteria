@@ -28,15 +28,19 @@ GtkWidget* main_image_display_get(fitsfile** current_file_ptr) {
 
 void main_image_display_load_new_image(ThreadPool* thread_pool, fitsfile** current_file_ptr) {
   if (!*current_file_ptr) return;
-
   int status = 0;
-  int width = 0, height = 0, channels = 0;
-  hcfitsio_get_image_dimensions(current_file_ptr, &width, &height, &channels, &status);
-  if (status) return;
+  
+  /* get total number of pixels */
+  int naxis = 0;
+  fits_get_img_dim(*current_file_ptr, &naxis, &status);
+  long naxes[naxis];
+  fits_get_img_size(*current_file_ptr, naxis, naxes, &status);
+  int pixel_count = 1;
+  for (int dim = 0; dim < naxis; dim++) {
+    pixel_count *= naxes[dim];
+  }
   
   float* img_data;
-  int pixel_count = width * height * channels;
-
   hcfitsio_get_image_data(current_file_ptr, &img_data);
   
   if (pixbuf_data) g_free(pixbuf_data);
@@ -49,9 +53,9 @@ void main_image_display_load_new_image(ThreadPool* thread_pool, fitsfile** curre
       GDK_COLORSPACE_RGB,
       FALSE,
       8,
-      width,
-      height,
-      width * channels,
+      naxes[0],
+      naxes[1],
+      naxes[0] * naxes[2],
       NULL,
       NULL
   );

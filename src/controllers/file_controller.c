@@ -64,6 +64,7 @@ void get_fitsfile(fitsfile** fitsfile_ptr) {
   if (fitsfile_absolute_path) {
     hcfitsio_open_file(fitsfile_ptr, fitsfile_absolute_path);
   }
+  free(fitsfile_absolute_path);
   return;
 }
 
@@ -74,6 +75,7 @@ void save_as_fitsfile(fitsfile* fitsfile_ptr) {
   if (fitsfile_absolute_path) {
     hcfitsio_save_as_file(fitsfile_ptr, fitsfile_absolute_path);
   }
+  free(fitsfile_absolute_path);
   return;
 }
 
