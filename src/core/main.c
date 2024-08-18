@@ -1,6 +1,8 @@
+/* external libraries */
 #include <gtk/gtk.h>
-#include "fitsio.h"
+#include <fitsio.h>
 
+/* project files */
 #include "threads.h"
 #include "shared_data.h"
 #include "../ui/main_image_display.h"

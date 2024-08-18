@@ -3,7 +3,7 @@
 
 /* external libraries */
 #include <gtk/gtk.h>
-#include "fitsio.h"
+#include <fitsio.h>
 
 /* project files */
 #include "../core/threads.h"

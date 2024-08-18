@@ -2,7 +2,6 @@
 #include "app_cfitsio_helper.h"
 
 /* external libraries */
-#include "fitsio.h"
 #include <math.h>
 
 /* project files */

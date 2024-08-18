@@ -1,8 +1,10 @@
+/* primary header include */
 #include "main_menu_bar.h"
 
-#include "fitsio.h"
+/* external libraries */
+#include <fitsio.h>
 
-#include "longnam.h"
+/* project files */
 #include "main_image_display.h"
 #include "../controllers/file_controller.h"
 #include "../helpers/app_gtk_helper.h"

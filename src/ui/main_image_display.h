@@ -1,9 +1,11 @@
 #ifndef MAIN_IMAGE_DISPLAY_H
 #define MAIN_IMAGE_DISPLAY_H
 
-#include "fitsio.h"
+/* external libraries */
+#include <fitsio.h>
 #include <gtk/gtk.h>
 
+/* project files */
 #include "../core/threads.h"
 
 enum PreviewMode {

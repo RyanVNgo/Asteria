@@ -1,5 +1,7 @@
+/* primary header include */
 #include "main_image_display.h"
 
+/* project files */
 #include "main_options_bar.h"
 #include "../helpers/app_cfitsio_helper.h"
 

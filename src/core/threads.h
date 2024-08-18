@@ -1,6 +1,7 @@
 #ifndef THREADS_H
 #define THREADS_H
 
+/* external libraries */
 #include <pthread.h>
 
 typedef struct TaskQueue TaskQueue;

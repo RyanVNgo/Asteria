@@ -1,7 +1,10 @@
 #ifndef MAIN_OPTIONS_BAR_H
 #define MAIN_OPTIONS_BAR_H
 
-#include "gtk/gtk.h"
+/* external libraries */
+#include <gtk/gtk.h>
+
+/* project files */
 #include "../core/shared_data.h"
 
 void main_options_bar_reset_scale_factor();

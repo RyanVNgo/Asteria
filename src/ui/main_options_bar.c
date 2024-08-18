@@ -1,8 +1,7 @@
+/* primary header include */
 #include "main_options_bar.h"
 
-#include "gtk/gtk.h"
-#include <string.h>
-
+/* project files */
 #include "main_image_display.h"
 
 static float scale_factor;

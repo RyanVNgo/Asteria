@@ -7,7 +7,6 @@
 /* project files */
 #include "../helpers/app_cfitsio_helper.h"
 
-
 /********************************************************************************/
 /* internal method definitions */
 /* these methods are inaccessible to external users */
