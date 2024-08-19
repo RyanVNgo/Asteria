@@ -1,8 +1,9 @@
 /* primary header include */
-#include "main_options_bar.h"
+#include "options_bar.h"
 
 /* project files */
-#include "main_image_display.h"
+#include "image_display.h"
+#include "../controllers/image_controller.h"
 
 static float scale_factor;
 
@@ -12,20 +13,22 @@ void update_scale_label(GtkWidget* button, GtkWidget* label) {
   return;
 }
 
-void main_options_bar_reset_scale_factor() {
+void options_bar_reset_scale_factor() {
   scale_factor = 1.0;
   return;
 }
 
+/*
 void dec_image_scale(GtkWidget* widget, SharedData* shared_data) {
-  main_image_display_dec_image_scale(&scale_factor);
+  image_display_dec_image_scale(&scale_factor);
   return;
 }
 
 void inc_image_scale(GtkWidget* widget, SharedData* shared_data) {
-  main_image_display_inc_image_scale(&scale_factor);
+  image_display_inc_image_scale(&scale_factor);
   return;
 }
+*/
 
 GtkWidget* scale_widgets_get(SharedData* shared_data) {
   GtkWidget* button_box = gtk_button_box_new(GTK_ORIENTATION_VERTICAL);
@@ -36,13 +39,13 @@ GtkWidget* scale_widgets_get(SharedData* shared_data) {
   GtkWidget* scale_dec_button = gtk_button_new_with_label("-");
   gtk_widget_set_size_request(scale_dec_button, 20, 20);
   gtk_widget_set_can_focus(scale_dec_button, FALSE);
-  g_signal_connect(scale_dec_button, "clicked", G_CALLBACK(dec_image_scale), shared_data);
+  //g_signal_connect(scale_dec_button, "clicked", G_CALLBACK(dec_image_scale), shared_data);
   g_signal_connect(scale_dec_button, "clicked", G_CALLBACK(update_scale_label), scale_label);
   
   GtkWidget* scale_inc_button = gtk_button_new_with_label("+");
   gtk_widget_set_size_request(scale_inc_button, 20, 20);
   gtk_widget_set_can_focus(scale_inc_button, FALSE);
-  g_signal_connect(scale_inc_button, "clicked", G_CALLBACK(inc_image_scale), shared_data);
+  //g_signal_connect(scale_inc_button, "clicked", G_CALLBACK(inc_image_scale), shared_data);
   g_signal_connect(scale_inc_button, "clicked", G_CALLBACK(update_scale_label), scale_label);
 
   gtk_container_add(GTK_CONTAINER(button_box), scale_inc_button);
@@ -57,20 +60,20 @@ void change_preview_mode_label(GtkWidget* set_widget, gpointer preview_mode_menu
 
   if (!strcmp(label, "Linear")) {
     gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Linear");
-    main_image_display_set_preview_mode(LINEAR);
+    image_display_set_preview_mode(LINEAR);
   } else if (!strcmp(label, "Square Root")) {
     gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Square Root");
-    main_image_display_set_preview_mode(SQUARE_ROOT);
+    image_display_set_preview_mode(SQUARE_ROOT);
   } else if (!strcmp(label, "Autostretch")) {
     gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Autostretch");
-    main_image_display_set_preview_mode(AUTOSTRETCH);
+    image_display_set_preview_mode(AUTOSTRETCH);
   }
 
   return;
 }
 
 void update_image_preview(GtkWidget* set_widget, SharedData* shared_data) {
-  main_image_display_load_new_image(shared_data->thread_pool, &shared_data->current_file);
+  load_new_image(shared_data);
   return;
 }
 
@@ -104,7 +107,7 @@ GtkWidget* preview_mode_widgets_get(SharedData* shared_data) {
   return preview_mode_menu_button;
 }
 
-GtkWidget* main_options_bar_get(SharedData* shared_data) {
+GtkWidget* options_bar_get(SharedData* shared_data) {
   scale_factor = 1.0;
 
   guint spacing = 5;

@@ -62,7 +62,7 @@ void get_fitsfile(fitsfile** fitsfile_ptr) {
   char* fitsfile_absolute_path = NULL;
   open_file_dialog(&fitsfile_absolute_path);
   if (fitsfile_absolute_path) {
-    hcfitsio_open_file(fitsfile_ptr, fitsfile_absolute_path);
+    h_open_fits_file(fitsfile_ptr, fitsfile_absolute_path);
   }
   free(fitsfile_absolute_path);
   return;
@@ -73,7 +73,7 @@ void save_as_fitsfile(fitsfile* fitsfile_ptr) {
   char* fitsfile_absolute_path = NULL;
   save_as_file_dialog(&fitsfile_absolute_path);
   if (fitsfile_absolute_path) {
-    hcfitsio_save_as_file(fitsfile_ptr, fitsfile_absolute_path);
+    h_save_as_fits_file(fitsfile_ptr, fitsfile_absolute_path);
   }
   free(fitsfile_absolute_path);
   return;

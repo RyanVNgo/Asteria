@@ -1,12 +1,13 @@
 /* primary header include */
-#include "main_menu_bar.h"
+#include "menu_bar.h"
 
 /* external libraries */
 #include <fitsio.h>
 
 /* project files */
-#include "main_image_display.h"
+//#include "image_display.h"
 #include "../controllers/file_controller.h"
+#include "../controllers/image_controller.h"
 #include "../helpers/app_gtk_helper.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
@@ -28,7 +29,8 @@ static void on_window_activate(GtkWidget* menu_item, gpointer window) {
 void open_item_activate(GtkWidget* menu_item, SharedData* shared_data) {
   get_fitsfile(&shared_data->current_file);
   if (shared_data->current_file) {
-    main_image_display_load_new_image(shared_data->thread_pool, &shared_data->current_file);
+    load_new_image(shared_data);
+    //image_display_load_new_image(shared_data->thread_pool, &shared_data->current_file);
   } 
   return;
 }
@@ -129,7 +131,7 @@ static GtkWidget* menu_bar_help_item() {
 /**************************************************/
 /* Menu Bar */
 
-GtkWidget* main_menu_bar_get(SharedData* shared_data) {
+GtkWidget* menu_bar_get(SharedData* shared_data) {
   GtkWidget* menu_bar = gtk_menu_bar_new();
   
   GtkWidget* file_item = menu_bar_file_item(shared_data);

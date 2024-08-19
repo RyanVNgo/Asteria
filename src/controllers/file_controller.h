@@ -1,7 +1,7 @@
 #ifndef FILE_CONTROLLER_H
 #define FILE_CONTROLLER_H
 
-/* external liraries */
+/* external libraries */
 #include <fitsio.h>
 
 void get_fitsfile(fitsfile** fitsfile_ptr);

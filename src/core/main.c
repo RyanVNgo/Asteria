@@ -5,9 +5,9 @@
 /* project files */
 #include "threads.h"
 #include "shared_data.h"
-#include "../ui/main_image_display.h"
-#include "../ui/main_menu_bar.h"
-#include "../ui/main_options_bar.h"
+#include "../ui/image_display.h"
+#include "../ui/menu_bar.h"
+#include "../ui/options_bar.h"
 
 static void asteria_activate(GtkApplication* app, gpointer thread_pool_in) {
   ThreadPool* thread_pool = (ThreadPool*)thread_pool_in;
@@ -27,13 +27,13 @@ static void asteria_activate(GtkApplication* app, gpointer thread_pool_in) {
   GtkWidget* home_grid = gtk_grid_new();
   gtk_container_add(GTK_CONTAINER(window), home_grid);
 
-  GtkWidget* menu_bar = main_menu_bar_get(shared_data);
+  GtkWidget* menu_bar = menu_bar_get(shared_data);
   gtk_grid_attach(GTK_GRID(home_grid), menu_bar, 0, 0, 1, 1);
 
-  GtkWidget* options_bar = main_options_bar_get(shared_data);
+  GtkWidget* options_bar = options_bar_get(shared_data);
   gtk_grid_attach(GTK_GRID(home_grid), options_bar, 0, 1, 1, 1);
 
-  GtkWidget* image_display = main_image_display_get(&current_file);
+  GtkWidget* image_display = image_display_get(shared_data);
   gtk_grid_attach(GTK_GRID(home_grid), image_display, 0, 2, 1, 1);
 
   gtk_widget_show_all(window);

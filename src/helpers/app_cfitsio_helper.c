@@ -6,7 +6,9 @@
 
 /* project files */
 #include "../core/threads.h"
-#include "../ui/main_image_display.h"
+#include "../ui/image_display.h"
+
+#define GUCHAR_MAX 255
 
 int bitpix_to_datatype(int bitpix) {
   switch(bitpix) {
@@ -49,17 +51,20 @@ float autostretch_root_scale_func(float data_val) {
   return data_val;
 }
 
-void img_data_to_pixbuf_format_thr(void* args) {
-  struct idtpbf_args* parsed_args = (struct idtpbf_args*)args;
-  ThreadMonitor* thread_monitor = parsed_args->thread_monitor;
-  float** img_data = parsed_args->img_data;
-  guchar** pixbuf_data = parsed_args->pixbuf_data;
-  int channel = parsed_args->channel;
-  int channel_size = parsed_args->channel_size;
-  enum PreviewMode preview_mode = parsed_args->preview_mode;
+void h_fits_img_data_to_pixbuf_format(fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode) {
+  //const guchar guchar_max = 255;
+  int status = 0;
 
-  const guchar guchar_max = 255;
+  int maxdim = 0;
+  fits_get_img_dim(*current_file_ptr, &maxdim, &status);
 
+  long naxes[maxdim];
+  fits_get_img_size(*current_file_ptr, maxdim, naxes, &status);
+
+  int channel_size = naxes[0] * naxes[1];
+  float data_val = 0;
+  int norm_val = 0;
+  
   float (*scaling_func)(float);
   switch (preview_mode) {
     case LINEAR:
@@ -75,103 +80,71 @@ void img_data_to_pixbuf_format_thr(void* args) {
       scaling_func = linear_scale_func;
   }
 
-  float data_val = 0;
   int pixbuf_val= 0;
-  int i = channel;
-  for (int p = channel * channel_size; p < (channel+1) * channel_size; p++) {
-    data_val = scaling_func((*img_data)[p]);
-    pixbuf_val = data_val * guchar_max;
-    if (pixbuf_val > guchar_max) pixbuf_val = guchar_max;
-    (*pixbuf_data)[i] = pixbuf_val;
-    i += 3;
+
+  for (int c = 0; c < naxes[2]; c++) {
+    int i = c;
+    for (int p = c* channel_size; p < (c+1) * channel_size; p++) {
+      data_val = scaling_func((*img_data)[p]);
+      pixbuf_val = data_val * GUCHAR_MAX;
+      if (pixbuf_val > GUCHAR_MAX) pixbuf_val = GUCHAR_MAX;
+      (*pixbuf_data)[i] = pixbuf_val;
+      i += 3;
+    }
   }
 
-  thread_monitor_signal(thread_monitor);
   return;
 }
 
-#include <time.h>
-void hcfitsio_img_data_to_pixbuf_format(ThreadPool* thread_pool, fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode) {
-  const guchar guchar_max = 255;
-
-  int maxdim = 0;
+int h_fits_img_dim_count(fitsfile* fitsfile_ptr) {
   int status = 0;
-  fits_get_img_dim(*current_file_ptr, &maxdim, &status);
+  int dim_count = 0;
+  fits_get_img_dim(fitsfile_ptr, &dim_count, &status);
+  return dim_count;
+}
 
-  if (status) {
-    fits_report_error(stderr, status);
-    return;
-  }
-
-  long naxes[maxdim];
-  fits_get_img_size(*current_file_ptr, maxdim, naxes, &status);
-  if (status) {
-    fits_report_error(stderr, status);
-    return;
-  }
-
-  int channel_size = naxes[0] * naxes[1];
-  float data_val = 0;
-  int norm_val = 0;
-
-  int task_count = 3;
-  ThreadMonitor* thread_monitor = thread_monitor_init(task_count);
-  struct idtpbf_args* task_args[3];
-  
-  clock_t start = clock();
-  for (int i = 0; i < naxes[2]; i++) {
-    task_args[i] = malloc(sizeof(struct idtpbf_args));
-    task_args[i]->thread_monitor = thread_monitor;
-    task_args[i]->img_data = img_data;
-    task_args[i]->pixbuf_data = pixbuf_data;
-    task_args[i]->channel = i;
-    task_args[i]->channel_size = channel_size;
-    task_args[i]->preview_mode = preview_mode;
-    submit_task(thread_pool, img_data_to_pixbuf_format_thr, task_args[i]);
-  }
-
-  thread_monitor_wait(thread_monitor);
-
-  clock_t end = clock();
-  int msec_time = (end - start) * 1000 / CLOCKS_PER_SEC;
-  g_print("Exec time: %d milliseconds.\n", msec_time);
-
-  thread_monitor_destroy(thread_monitor);
+void h_fits_img_dim_size(fitsfile* fitsfile_ptr, long* dim_size) {
+  int status = 0;
+  fits_get_img_size(fitsfile_ptr, h_fits_img_dim_count(fitsfile_ptr), dim_size, &status);
   return;
 }
 
-void hcfitsio_get_image_data(fitsfile** current_file_ptr, float** image_data) {
+LONGLONG h_fits_img_pxl_count(fitsfile* fitsfile_ptr) {
+  LONGLONG pxl_count = 1;
+  int dim_count = h_fits_img_dim_count(fitsfile_ptr);
+  long dim_size[dim_count];
+  h_fits_img_dim_size(fitsfile_ptr, dim_size);
+  for (int d = 0; d < dim_count; d++) {
+    pxl_count *= dim_size[d];
+  }
+  return pxl_count;
+}
+
+void h_get_fits_img_data(fitsfile** current_file_ptr, float** image_data) {
   int status = 0;
   
-  /* get total number of pixels */
-  int naxis = 0;
-  fits_get_img_dim(*current_file_ptr, &naxis, &status);
-  long naxes[naxis];
-  fits_get_img_size(*current_file_ptr, naxis, naxes, &status);
-  LONGLONG n_elements = 1;
-  for (int dim = 0; dim < naxis; dim++) {
-    n_elements *= naxes[dim];
-  }
-
   /* get data type of fits file */
   int bitpix;
   fits_get_img_type(*current_file_ptr, &bitpix, &status);
   int data_type = bitpix_to_datatype(bitpix);
 
+  /* get total pixel count */
+  int pixel_count = h_fits_img_pxl_count(*current_file_ptr);
+
   /* extract raw data from fits file */
   long naxis_start[3] = {1, 1, 1};
-  *image_data = (float*)malloc(n_elements * sizeof(float));
-  fits_read_pix(*current_file_ptr, data_type, naxis_start, n_elements, NULL, *image_data, NULL, &status);
+  *image_data = (float*)malloc(pixel_count * sizeof(float));
+  fits_read_pix(*current_file_ptr, data_type, naxis_start, pixel_count, NULL, *image_data, NULL, &status);
 
   return;
 }
 
-void hcfitsio_open_file(fitsfile** fitsfile_ptr, char* fitsfile_absolute_path) {
+/********************************************************************************/
+/* file routines */
+
+void h_open_fits_file(fitsfile** fitsfile_ptr, char* fitsfile_absolute_path) {
   int status = 0;
-  
-  if (*fitsfile_ptr) {
-    fits_close_file(*fitsfile_ptr, &status);
-  }
+  if (*fitsfile_ptr) fits_close_file(*fitsfile_ptr, &status);
   
   fits_open_file(fitsfile_ptr, fitsfile_absolute_path, READONLY, &status);
 
@@ -183,7 +156,7 @@ void hcfitsio_open_file(fitsfile** fitsfile_ptr, char* fitsfile_absolute_path) {
   return;
 }
 
-void hcfitsio_save_as_file(fitsfile* fitsfile_ptr, char* fitsfile_absolute_path) {
+void h_save_as_fits_file(fitsfile* fitsfile_ptr, char* fitsfile_absolute_path) {
   int status = 0;
   fitsfile* new_fptr;
 
