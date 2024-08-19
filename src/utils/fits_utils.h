@@ -1,5 +1,5 @@
-#ifndef APP_CFITSIO_HELPER_H
-#define APP_CFITSIO_HELPER_H
+#ifndef FITS_UTILS_H
+#define FITS_UTILS_H
 
 /* external libraries */
 #include <gtk/gtk.h>

@@ -5,10 +5,9 @@
 #include <fitsio.h>
 
 /* project files */
-//#include "image_display.h"
 #include "../controllers/file_controller.h"
 #include "../controllers/image_controller.h"
-#include "../helpers/app_gtk_helper.h"
+#include "../utils/gtk_utils.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);

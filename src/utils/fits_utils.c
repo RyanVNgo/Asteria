@@ -1,5 +1,5 @@
 /* primary header include */
-#include "app_cfitsio_helper.h"
+#include "fits_utils.h"
 
 /* external libraries */
 #include <math.h>
@@ -52,7 +52,6 @@ float autostretch_root_scale_func(float data_val) {
 }
 
 void h_fits_img_data_to_pixbuf_format(fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode) {
-  //const guchar guchar_max = 255;
   int status = 0;
 
   int maxdim = 0;

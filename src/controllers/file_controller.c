@@ -5,7 +5,7 @@
 #include <gtk/gtk.h>
 
 /* project files */
-#include "../helpers/app_cfitsio_helper.h"
+#include "../utils/fits_utils.h"
 
 /********************************************************************************/
 /* internal method definitions */

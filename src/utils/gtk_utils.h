@@ -1,5 +1,5 @@
-#ifndef APP_GTK_HELPER_H
-#define APP_GTK_HELPER_H
+#ifndef GTK_UTILS_H
+#define GTK_UTILS_H
 
 /* external libraries */
 #include <gtk/gtk.h>

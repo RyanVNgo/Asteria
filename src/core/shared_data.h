@@ -6,12 +6,14 @@
 #include <gtk/gtk.h>
 
 /* project files */
+#include "gdk-pixbuf/gdk-pixbuf.h"
 #include "threads.h"
 
 typedef struct SharedData {
   ThreadPool* thread_pool;
   fitsfile* current_file;
   GtkWidget* display_image;
+  GdkPixbuf* unscaled_pixbuf;
   float display_scale;
 } SharedData;
 

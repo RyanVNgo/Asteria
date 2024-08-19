@@ -10,7 +10,7 @@ SRC_DIR = src
 CORE_DIR = $(SRC_DIR)/core
 UI_DIR = $(SRC_DIR)/ui
 CONTROLLERS_DIR = $(SRC_DIR)/controllers
-HELPERS_DIR = $(SRC_DIR)/helpers
+HELPERS_DIR = $(SRC_DIR)/utils
 
 CORE_SRCS = $(wildcard $(CORE_DIR)/*.c)
 UI_SRCS = $(wildcard $(UI_DIR)/*.c)

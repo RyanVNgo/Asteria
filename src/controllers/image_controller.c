@@ -2,7 +2,8 @@
 #include "image_controller.h"
 
 /* project files */
-#include "../helpers/app_cfitsio_helper.h"
+#include "../utils/fits_utils.h"
+#include "../utils/display_img_utils.h"
 
 /********************************************************************************/
 /* internal method definitions */
@@ -10,6 +11,11 @@
 
 void destroy_pixbuf_data(guchar* pixbuf_data, gpointer data) {
   free(pixbuf_data);
+  return;
+}
+
+void update_image(GtkImage* diplay_image) {
+
   return;
 }
 
@@ -49,10 +55,27 @@ void load_new_image(SharedData* shared_data) {
       NULL
   );
 
-  gtk_image_set_from_pixbuf(GTK_IMAGE(shared_data->display_image), base_pixbuf);
+  shared_data->unscaled_pixbuf = base_pixbuf;
+  shared_data->display_scale = 1.0;
+  gtk_image_set_from_pixbuf(GTK_IMAGE(shared_data->display_image), shared_data->unscaled_pixbuf);
 
-  g_object_unref(base_pixbuf);
   free(img_data);
   return;
 }
 
+#define MAX_SCALE 4.00
+#define MIN_SCALE 0.25
+
+void image_scale_increase(SharedData* shared_data) {
+  if (shared_data->display_scale >= MAX_SCALE) return;
+  shared_data->display_scale *= 2.0;
+  display_img_adj_scale(shared_data->display_image, shared_data->unscaled_pixbuf, shared_data->display_scale);
+  return;
+}
+
+void image_scale_decrease(SharedData* shared_data) {
+  if (shared_data->display_scale <= MIN_SCALE) return;
+  shared_data->display_scale /= 2.0;
+  display_img_adj_scale(shared_data->display_image, shared_data->unscaled_pixbuf, shared_data->display_scale);
+  return;
+}
