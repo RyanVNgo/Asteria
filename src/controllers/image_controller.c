@@ -5,24 +5,6 @@
 #include "../utils/fits_utils.h"
 #include "../utils/display_img_utils.h"
 
-/********************************************************************************/
-/* internal method definitions */
-/* these methods are inaccessible to external users */
-
-void destroy_pixbuf_data(guchar* pixbuf_data, gpointer data) {
-  free(pixbuf_data);
-  return;
-}
-
-void update_image(GtkImage* diplay_image) {
-
-  return;
-}
-
-/********************************************************************************/
-/* external method definitions */
-/* these methods are accessible to external users through image_controller.h */
-
 void load_new_image(SharedData* shared_data) {
   if (!shared_data->current_file) return;
   
