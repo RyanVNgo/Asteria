@@ -8,6 +8,7 @@
 #include "../controllers/file_controller.h"
 #include "../controllers/image_controller.h"
 #include "../utils/gtk_utils.h"
+#include "gtk/gtk.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);
@@ -29,7 +30,6 @@ void open_item_activate(GtkWidget* menu_item, SharedData* shared_data) {
   get_fitsfile(&shared_data->current_file);
   if (shared_data->current_file) {
     load_new_image(shared_data);
-    //image_display_load_new_image(shared_data->thread_pool, &shared_data->current_file);
   } 
   return;
 }
@@ -62,6 +62,21 @@ static GtkWidget* menu_bar_file_item(SharedData* shared_data) {
 
 void headers_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
   if (!*current_file_ptr) return;
+
+  GtkWidget* headers_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW(headers_window), "Headers");
+  gtk_window_set_resizable(GTK_WINDOW(headers_window), FALSE);
+  gtk_container_set_border_width(GTK_CONTAINER(headers_window), 5);
+
+  char* header_test = get_headers_as_string(*current_file_ptr);
+  GtkWidget* header_label = gtk_label_new(header_test);
+  gtk_label_set_justify(GTK_LABEL(header_label), GTK_JUSTIFY_LEFT);
+
+  gtk_container_add(GTK_CONTAINER(headers_window), header_label);
+
+  gtk_widget_show_all(headers_window);
+
+  /*
   int status = 0;
   int card_count;
 
@@ -75,6 +90,7 @@ void headers_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
     g_print("%s\n", card);
   }
 
+  */
   return;
 }
 

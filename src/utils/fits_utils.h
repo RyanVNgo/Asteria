@@ -19,4 +19,6 @@ void h_fits_img_data_to_pixbuf_format(fitsfile** current_file_ptr, float** img_d
 void h_open_fits_file(fitsfile** fitsfile_ptr, char* fitsfile_absolute_path);
 void h_save_as_fits_file(fitsfile* fitsfile_ptr, char* fitsfile_absolute_path);
 
+void h_get_headers(fitsfile* fitsfile_ptr, char* headers_buffer);
+
 #endif

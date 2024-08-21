@@ -79,3 +79,14 @@ void save_as_fitsfile(fitsfile* fitsfile_ptr) {
   return;
 }
 
+char* get_headers_as_string(fitsfile* fitsfile_ptr) {
+  if (!fitsfile_ptr) return "";
+
+  /*
+  char* headers_buffer;
+  h_get_headers(fitsfile_ptr, headers_buffer);
+  */
+
+  return "";
+}
+

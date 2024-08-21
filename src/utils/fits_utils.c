@@ -3,10 +3,12 @@
 
 /* external libraries */
 #include <math.h>
+#include <string.h>
 
 /* project files */
 #include "../core/threads.h"
 #include "../ui/image_display.h"
+#include "fitsio.h"
 
 #define GUCHAR_MAX 255
 
@@ -169,6 +171,25 @@ void h_save_as_fits_file(fitsfile* fitsfile_ptr, char* fitsfile_absolute_path) {
   fits_copy_file(fitsfile_ptr, new_fptr, 1, 1, 1, &status);
   
   fits_close_file(new_fptr, &status);
+  return;
+}
+
+void h_get_headers(fitsfile* fitsfile_ptr, char* headers_buffer) {
+  int status = 0;
+
+  int card_count;
+  fits_get_hdrspace(fitsfile_ptr, &card_count, NULL, &status);
+
+  headers_buffer = (char*)calloc(card_count, sizeof(char) * FLEN_CARD);
+
+  int buff_idx = 0;
+  for (int i = 1; i <= card_count; i++) {
+    buff_idx = (i - 1) * FLEN_CARD;
+    fits_read_record(fitsfile_ptr, i, headers_buffer + buff_idx, &status);
+    //headers_buffer[buff_idx + FLEN_CARD] = '\n';
+  }
+  g_print("%s\n", headers_buffer);
+
   return;
 }
 

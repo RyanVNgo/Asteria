@@ -12,4 +12,5 @@ void load_new_image(SharedData* shared_data);
 void image_scale_increase(SharedData* shared_data);
 void image_scale_decrease(SharedData* shared_data);
 
+
 #endif
