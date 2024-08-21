@@ -3,12 +3,6 @@
 
 /* external libraries */
 #include <math.h>
-#include <string.h>
-
-/* project files */
-#include "../core/threads.h"
-#include "../ui/image_display.h"
-#include "fitsio.h"
 
 #define GUCHAR_MAX 255
 
@@ -29,72 +23,6 @@ int bitpix_to_datatype(int bitpix) {
     default:
       return -1;
   }
-}
-
-struct idtpbf_args {
-  ThreadMonitor* thread_monitor;
-  float** img_data;
-  guchar** pixbuf_data;
-  int channel;
-  int channel_size;
-  enum PreviewMode preview_mode;
-} idtpbf_args;
-
-float linear_scale_func(float data_val) {
-  return data_val;
-}
-float logarithm_scale_func(float data_val) {
-  return data_val;
-}
-float square_root_scale_func(float data_val) {
-  return sqrt(data_val);
-}
-float autostretch_root_scale_func(float data_val) {
-  return data_val;
-}
-
-void h_fits_img_data_to_pixbuf_format(fitsfile** current_file_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode) {
-  int status = 0;
-
-  int maxdim = 0;
-  fits_get_img_dim(*current_file_ptr, &maxdim, &status);
-
-  long naxes[maxdim];
-  fits_get_img_size(*current_file_ptr, maxdim, naxes, &status);
-
-  int channel_size = naxes[0] * naxes[1];
-  float data_val = 0;
-  int norm_val = 0;
-  
-  float (*scaling_func)(float);
-  switch (preview_mode) {
-    case LINEAR:
-      scaling_func = linear_scale_func;
-      break;
-    case SQUARE_ROOT:
-      scaling_func = square_root_scale_func;
-      break;
-    case AUTOSTRETCH:
-      scaling_func = autostretch_root_scale_func;
-      break;
-    default:
-      scaling_func = linear_scale_func;
-  }
-
-  int pixbuf_val= 0;
-
-  for (int c = 0; c < naxes[2]; c++) {
-    int i = c;
-    for (int p = c* channel_size; p < (c+1) * channel_size; p++) {
-      data_val = scaling_func((*img_data)[p]);
-      pixbuf_val = data_val * GUCHAR_MAX;
-      if (pixbuf_val > GUCHAR_MAX) pixbuf_val = GUCHAR_MAX;
-      (*pixbuf_data)[i] = pixbuf_val;
-      i += 3;
-    }
-  }
-
-  return;
 }
 
 int h_fits_img_dim_count(fitsfile* fitsfile_ptr) {
@@ -121,21 +49,71 @@ LONGLONG h_fits_img_pxl_count(fitsfile* fitsfile_ptr) {
   return pxl_count;
 }
 
-void h_get_fits_img_data(fitsfile** current_file_ptr, float** image_data) {
+void h_get_fits_img_data(fitsfile* fitsfile_ptr, float** image_data) {
   int status = 0;
   
   /* get data type of fits file */
   int bitpix;
-  fits_get_img_type(*current_file_ptr, &bitpix, &status);
+  fits_get_img_type(fitsfile_ptr, &bitpix, &status);
   int data_type = bitpix_to_datatype(bitpix);
 
   /* get total pixel count */
-  int pixel_count = h_fits_img_pxl_count(*current_file_ptr);
+  int pixel_count = h_fits_img_pxl_count(fitsfile_ptr);
 
   /* extract raw data from fits file */
   long naxis_start[3] = {1, 1, 1};
   *image_data = (float*)malloc(pixel_count * sizeof(float));
-  fits_read_pix(*current_file_ptr, data_type, naxis_start, pixel_count, NULL, *image_data, NULL, &status);
+  fits_read_pix(fitsfile_ptr, data_type, naxis_start, pixel_count, NULL, *image_data, NULL, &status);
+
+  return;
+}
+
+/* START opaque functions for data scaling */
+float linear_scale_func(float data_val) {
+  return data_val;
+}
+
+float square_root_scale_func(float data_val) {
+  return sqrt(data_val);
+}
+
+float autostretch_scale_func(float data_val) {
+  return data_val;
+}
+/* END opaque functions for data scaling */
+
+void* h_get_scaling_function(enum PreviewMode preview_mode) {
+  if (preview_mode == SQUARE_ROOT) return square_root_scale_func;
+  if (preview_mode == AUTOSTRETCH) return autostretch_scale_func;
+  return linear_scale_func;
+}
+
+
+void h_scale_img_data(float** img_data, int pixel_count, void (scaling_func)(float*)) {
+  for (int i = 0; i < pixel_count; i++) {
+    scaling_func((*img_data) + i);
+  }
+  return;
+}
+
+void h_fits_img_data_to_pixbuf_format(fitsfile* fitsfile_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode) {
+  int status = 0;
+
+  int maxdim = 0;
+  fits_get_img_dim(fitsfile_ptr, &maxdim, &status);
+
+  long naxes[maxdim];
+  fits_get_img_size(fitsfile_ptr, maxdim, naxes, &status);
+  int channel_size = naxes[0] * naxes[1];
+  
+  for (int c = 0; c < naxes[2]; c++) {
+    int i = c;
+    for (int p = c* channel_size; p < (c+1) * channel_size; p++) {
+      (*pixbuf_data)[i] = (*img_data)[p] * GUCHAR_MAX; 
+      if ((*pixbuf_data)[i] > GUCHAR_MAX) (*pixbuf_data)[i] = GUCHAR_MAX;
+      i += 3;
+    }
+  }
 
   return;
 }
@@ -174,21 +152,33 @@ void h_save_as_fits_file(fitsfile* fitsfile_ptr, char* fitsfile_absolute_path) {
   return;
 }
 
-void h_get_headers(fitsfile* fitsfile_ptr, char* headers_buffer) {
+/* 
+ * allocs and fills headers_buffer with headers as single string 
+ * likey change to more dynamic structure like a multi-dim array
+ */
+void h_get_headers(fitsfile* fitsfile_ptr, char** headers_buffer) {
   int status = 0;
 
-  int card_count;
+  int card_count = 0;
   fits_get_hdrspace(fitsfile_ptr, &card_count, NULL, &status);
 
-  headers_buffer = (char*)calloc(card_count, sizeof(char) * FLEN_CARD);
-
-  int buff_idx = 0;
+  char card[FLEN_CARD];
+  int buffer_idx = 0;
+  int card_length = 0;
   for (int i = 1; i <= card_count; i++) {
-    buff_idx = (i - 1) * FLEN_CARD;
-    fits_read_record(fitsfile_ptr, i, headers_buffer + buff_idx, &status);
-    //headers_buffer[buff_idx + FLEN_CARD] = '\n';
+    fits_read_record(fitsfile_ptr, i, card, &status);
+
+    card_length = 0;
+    while (card[card_length] != '\0') card_length++;
+
+    /* probably not best to do constant reallocs but it works for now */
+    /* maybe change in the future alongside structure change */
+    *headers_buffer = realloc(*headers_buffer, buffer_idx + card_length + 1);
+    strcpy(*headers_buffer + buffer_idx, card);
+    buffer_idx += card_length + 1;
+    (*headers_buffer)[buffer_idx - 1] = '\n';
   }
-  g_print("%s\n", headers_buffer);
+  (*headers_buffer)[buffer_idx - 1] = '\0';
 
   return;
 }

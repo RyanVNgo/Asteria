@@ -2,10 +2,12 @@
 #include "image_display.h"
 
 static GtkWidget* image_scrolled_window;
+/*
 static GtkWidget* image;
 static GdkPixbuf* base_pixbuf;
 static guchar* pixbuf_data;
 static enum PreviewMode preview_mode = LINEAR;
+*/
 
 GtkWidget* image_display_get(SharedData* shared_data) {
   GtkWidget* image_grid = gtk_grid_new();
@@ -61,12 +63,3 @@ void image_display_inc_image_scale(void* scale_factor_ptr) {
   return;
 }
 */
-
-void image_display_set_preview_mode(enum PreviewMode preview_mode_in) {
-  if (preview_mode_in == LINEAR ||
-      preview_mode_in == SQUARE_ROOT ||
-      preview_mode_in == AUTOSTRETCH ) {
-    preview_mode = preview_mode_in;
-  }
-  return;
-}

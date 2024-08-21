@@ -8,7 +8,6 @@
 #include "../controllers/file_controller.h"
 #include "../controllers/image_controller.h"
 #include "../utils/gtk_utils.h"
-#include "gtk/gtk.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);
@@ -66,31 +65,17 @@ void headers_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
   GtkWidget* headers_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(headers_window), "Headers");
   gtk_window_set_resizable(GTK_WINDOW(headers_window), FALSE);
-  gtk_container_set_border_width(GTK_CONTAINER(headers_window), 5);
+  gtk_container_set_border_width(GTK_CONTAINER(headers_window), 20);
 
-  char* header_test = get_headers_as_string(*current_file_ptr);
-  GtkWidget* header_label = gtk_label_new(header_test);
+  char* header_text = get_headers_as_string(*current_file_ptr);
+  GtkWidget* header_label = gtk_label_new(header_text);
   gtk_label_set_justify(GTK_LABEL(header_label), GTK_JUSTIFY_LEFT);
 
   gtk_container_add(GTK_CONTAINER(headers_window), header_label);
 
   gtk_widget_show_all(headers_window);
 
-  /*
-  int status = 0;
-  int card_count;
-
-  fits_get_hdrspace(*current_file_ptr, &card_count, NULL, &status);
-  if (status) return fits_report_error(stderr, status);
-
-  char card[FLEN_CARD];
-  int i = 1;
-  for(; i < card_count; i++) {
-    fits_read_record(*current_file_ptr, i, card, &status);
-    g_print("%s\n", card);
-  }
-
-  */
+  free(header_text);
   return;
 }
 

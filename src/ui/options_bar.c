@@ -2,8 +2,6 @@
 #include "options_bar.h"
 
 /* project files */
-#include "glib-object.h"
-#include "image_display.h"
 #include "../controllers/image_controller.h"
 
 static float scale_factor;
@@ -59,20 +57,28 @@ void change_preview_mode_label(GtkWidget* set_widget, gpointer preview_mode_menu
 
   if (!strcmp(label, "Linear")) {
     gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Linear");
-    image_display_set_preview_mode(LINEAR);
   } else if (!strcmp(label, "Square Root")) {
     gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Square Root");
-    image_display_set_preview_mode(SQUARE_ROOT);
   } else if (!strcmp(label, "Autostretch")) {
     gtk_button_set_label(GTK_BUTTON(preview_mode_menu_button), "Autostretch");
-    image_display_set_preview_mode(AUTOSTRETCH);
   }
 
   return;
 }
 
 void update_image_preview(GtkWidget* set_widget, SharedData* shared_data) {
-  load_new_image(shared_data);
+  const gchar* label = gtk_menu_item_get_label(GTK_MENU_ITEM(set_widget));
+
+  if (!strcmp(label, "Linear")) {
+    shared_data->preview_mode = LINEAR;
+  } else if (!strcmp(label, "Square Root")) {
+    shared_data->preview_mode = SQUARE_ROOT;
+  } else if (!strcmp(label, "Autostretch")) {
+    shared_data->preview_mode = AUTOSTRETCH;
+  }
+
+  update_image(shared_data);
+  //submit_task(shared_data->thread_pool, (void*)update_image, shared_data);
   return;
 }
 

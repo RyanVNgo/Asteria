@@ -15,11 +15,11 @@ void load_new_image(SharedData* shared_data) {
   int pixel_count = h_fits_img_pxl_count(shared_data->current_file);
 
   float* img_data; 
-  h_get_fits_img_data(&shared_data->current_file, &img_data);
+  h_get_fits_img_data(shared_data->current_file, &img_data);
 
   guchar* pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
   h_fits_img_data_to_pixbuf_format(
-      &shared_data->current_file, 
+      shared_data->current_file, 
       &img_data, 
       &pixbuf_data, 
       pixel_count, 
@@ -42,6 +42,17 @@ void load_new_image(SharedData* shared_data) {
   gtk_image_set_from_pixbuf(GTK_IMAGE(shared_data->display_image), shared_data->unscaled_pixbuf);
 
   free(img_data);
+  return;
+}
+
+void update_image(SharedData* shared_data) {
+  if (!shared_data->current_file) return;
+
+  int pixel_count = h_fits_img_pxl_count(shared_data->current_file);
+  float* img_data;
+  h_get_fits_img_data(shared_data->current_file, &img_data);
+
+
   return;
 }
 
