@@ -69,45 +69,58 @@ void h_get_fits_img_data(fitsfile* fitsfile_ptr, float** image_data) {
 }
 
 /* START opaque functions for data scaling */
-void linear_scale_func(float* data_val) {
+void square_root_scale_func(float** img_data, int pixel_count) {
+  int i = 0;
+  for (; i < pixel_count - 4 ; i += 4) {
+    *(*img_data + i) = sqrt(*(*img_data + i));
+    *(*img_data + i + 1) = sqrt(*(*img_data + i + 1));
+    *(*img_data + i + 2) = sqrt(*(*img_data + i + 2));
+    *(*img_data + i + 3) = sqrt(*(*img_data + i + 3));
+  }
+
+  for (; i < pixel_count; i++) {
+    *(*img_data + i) = sqrt(*(*img_data + i));
+  }
+
   return;
 }
 
-void square_root_scale_func(float* data_val) {
-  *data_val = sqrt(*data_val);
-  return;
-}
+void autostretch_scale_func(float** img_data, int pixel_count, int dim_count) {
+  int channel_size = pixel_count / dim_count;
+  float dim_avg[dim_count];
+  float pow_val[dim_count];
+  float t_val = 0.2;
 
-void autostretch_scale_func(float* data_val) {
+  /* find pixl avg per channel and pow val */
+  int i = 0;
+  int c = 0;
+  for (c = 0; c < dim_count; c++) {
+    dim_avg[c] = 0;
+    i = 0;
+    for(; i < channel_size; i++) {
+      dim_avg[c] += *(*img_data + i + (channel_size * c));
+    }
+    dim_avg[c] /= channel_size;
+    pow_val[c] = log(t_val) / log(dim_avg[c]);
+  }
+
+  /* autostretch data */
+  int pxl_idx = 0;
+  for (c = 0; c < dim_count; c++) {
+    i = 0;
+    for(; i < channel_size; i++) {
+      pxl_idx = i + (channel_size * c);
+      *(*img_data + pxl_idx) = pow(*(*img_data + pxl_idx), pow_val[c]);
+    }
+  }
+
   return;
 }
 /* END opaque functions for data scaling */
 
-void* h_get_scaling_function(enum PreviewMode preview_mode) {
-  if (preview_mode == SQUARE_ROOT) return square_root_scale_func;
-  if (preview_mode == AUTOSTRETCH) return autostretch_scale_func;
-  return linear_scale_func;
-}
-
-
-void h_scale_img_data(float** img_data, int pixel_count, void (scaling_func)(float*)) {
-  int i = 0;
-
-  for (; i < pixel_count; i++) {
-    scaling_func((*img_data) + i);
-  }
-
-  /*
-   * This reduces execution time by several miliseconds
-   * some more testing needs to be done by will switch so this implementation later
-  for (; i < pixel_count; i += 4) {
-    scaling_func((*img_data) + i);
-    scaling_func((*img_data) + i + 1);
-    scaling_func((*img_data) + i + 2);
-    scaling_func((*img_data) + i + 3);
-  }
-  */
-
+void h_scale_img_data(float** img_data, int pixel_count, int dim_count, enum PreviewMode preview_mode) {
+  if (preview_mode == SQUARE_ROOT) square_root_scale_func(img_data, pixel_count);
+  if (preview_mode == AUTOSTRETCH) autostretch_scale_func(img_data, pixel_count, dim_count);
   return;
 }
 

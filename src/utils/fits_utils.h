@@ -14,8 +14,7 @@ LONGLONG h_fits_img_pxl_count(fitsfile* fitsfile_ptr);
 
 void h_get_fits_img_data(fitsfile* fitsfile_ptr, float** image_data);
 
-void* h_get_scaling_function(enum PreviewMode preview_mode);
-void h_scale_img_data(float** img_data, int pixel_count, void (scaling_func)(float*));
+void h_scale_img_data(float** img_data, int pixel_count, int dim_count, enum PreviewMode preview_mode);
 
 void h_fits_img_data_to_pixbuf_format(fitsfile* fitsfile_ptr, float** img_data, guchar** pixbuf_data, int pixel_count);
 

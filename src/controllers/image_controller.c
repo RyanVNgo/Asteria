@@ -17,8 +17,7 @@ void load_new_image(SharedData* shared_data) {
   float* img_data; 
   h_get_fits_img_data(shared_data->current_file, &img_data);
 
-  void* scaling_func = h_get_scaling_function(shared_data->preview_mode);
-  h_scale_img_data(&img_data, pixel_count, scaling_func);
+  h_scale_img_data(&img_data, pixel_count, dim_count, shared_data->preview_mode);
 
   guchar* pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
   h_fits_img_data_to_pixbuf_format(
@@ -52,6 +51,7 @@ void load_new_image(SharedData* shared_data) {
   return;
 }
 
+#include <time.h>
 void update_image(SharedData* shared_data) {
   if (!shared_data->current_file) return;
 
@@ -63,9 +63,8 @@ void update_image(SharedData* shared_data) {
   float* img_data;
   h_get_fits_img_data(shared_data->current_file, &img_data);
 
-  void* scaling_func = h_get_scaling_function(shared_data->preview_mode);
-  h_scale_img_data(&img_data, pixel_count, scaling_func);
-  
+  h_scale_img_data(&img_data, pixel_count, dim_count, shared_data->preview_mode);
+
   guchar* pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
   h_fits_img_data_to_pixbuf_format(
       shared_data->current_file,
