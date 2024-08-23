@@ -44,13 +44,11 @@ static GtkWidget* menu_bar_file_item(SharedData* shared_data) {
   GtkWidget* open_item = gtk_menu_item_new_with_label("Open");
   g_signal_connect(open_item, "activate", G_CALLBACK(open_item_activate), shared_data);
 
-  GtkWidget* save_item = gtk_menu_item_new_with_label("Save");
 
   GtkWidget* saveas_item = gtk_menu_item_new_with_label("Save As");
   g_signal_connect(saveas_item, "activate", G_CALLBACK(saveas_item_activate), shared_data);
 
   hgtk_menu_item_add_menu_item(file_item, open_item);
-  hgtk_menu_item_add_menu_item(file_item, save_item);
   hgtk_menu_item_add_menu_item(file_item, saveas_item);
 
   return file_item;
@@ -59,15 +57,15 @@ static GtkWidget* menu_bar_file_item(SharedData* shared_data) {
 /**************************************************/
 /* Info */
 
-void headers_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
-  if (!*current_file_ptr) return;
+void headers_item_activate(GtkWidget* menu_item, fitsfile* current_file_ptr) {
+  if (!current_file_ptr) return;
 
   GtkWidget* headers_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(headers_window), "Headers");
   gtk_window_set_resizable(GTK_WINDOW(headers_window), FALSE);
-  gtk_container_set_border_width(GTK_CONTAINER(headers_window), 20);
+  gtk_container_set_border_width(GTK_CONTAINER(headers_window), 15);
 
-  char* header_text = get_headers_as_string(*current_file_ptr);
+  char* header_text = get_headers_as_string(current_file_ptr);
   GtkWidget* header_label = gtk_label_new(header_text);
   gtk_label_set_justify(GTK_LABEL(header_label), GTK_JUSTIFY_LEFT);
 
@@ -79,11 +77,11 @@ void headers_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
   return;
 }
 
-static GtkWidget* menu_bar_info_item(fitsfile** current_file_ptr) {
+static GtkWidget* menu_bar_info_item(SharedData* shared_data) {
   GtkWidget* info_item = hgtk_menu_item_with_submenu_init("Info");
 
   GtkWidget* headers_item = gtk_menu_item_new_with_label("Headers");
-  g_signal_connect(headers_item, "activate", G_CALLBACK(headers_item_activate), current_file_ptr);
+  g_signal_connect(headers_item, "activate", G_CALLBACK(headers_item_activate), shared_data->current_file);
 
   hgtk_menu_item_add_menu_item(info_item, headers_item);
 
@@ -136,7 +134,7 @@ GtkWidget* menu_bar_get(SharedData* shared_data) {
   
   GtkWidget* file_item = menu_bar_file_item(shared_data);
   GtkWidget* help_item = menu_bar_help_item();
-  GtkWidget* info_item = menu_bar_info_item(&shared_data->current_file);
+  GtkWidget* info_item = menu_bar_info_item(shared_data);
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), file_item);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), info_item);

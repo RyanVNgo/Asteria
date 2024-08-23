@@ -4,21 +4,18 @@
 /* project files */
 #include "../controllers/image_controller.h"
 
+/**************************************************/
+/* Scaling Widgets and Methods */
+
 static float scale_factor;
-
-void update_scale_label(GtkWidget* button, GtkWidget* label) {
-  char* new_label = g_strdup_printf("%.2fx", scale_factor);
-  gtk_label_set_label(GTK_LABEL(label), new_label);
-  return;
-}
-
-void options_bar_reset_scale_factor() {
-  scale_factor = 1.0;
-  return;
-}
 
 void scale_inc_button_call(GtkWidget* button, SharedData* shared_data) {
   image_scale_increase(shared_data);
+  return;
+}
+
+void default_scale_button_call(GtkWidget* button, SharedData* shared_data) {
+  image_scale_default(shared_data);
   return;
 }
 
@@ -29,28 +26,35 @@ void scale_dec_button_call(GtkWidget* button, SharedData* shared_data) {
 
 GtkWidget* scale_widgets_get(SharedData* shared_data) {
   GtkWidget* button_box = gtk_button_box_new(GTK_ORIENTATION_VERTICAL);
-  
-  GtkWidget* scale_label = gtk_label_new("1.00x");
-  gtk_widget_set_size_request(scale_label, 20, 20);
-
-  GtkWidget* scale_dec_button = gtk_button_new_with_label("-");
-  gtk_widget_set_size_request(scale_dec_button, 20, 20);
-  gtk_widget_set_can_focus(scale_dec_button, FALSE);
-  g_signal_connect(scale_dec_button, "clicked", G_CALLBACK(scale_dec_button_call), shared_data);
-  g_signal_connect(scale_dec_button, "clicked", G_CALLBACK(update_scale_label), scale_label);
-  
   GtkWidget* scale_inc_button = gtk_button_new_with_label("+");
+  GtkWidget* scale_default_button = gtk_button_new_with_label("1.0x");
+  GtkWidget* scale_dec_button = gtk_button_new_with_label("-");
+
+  /* scale_inc_button */
   gtk_widget_set_size_request(scale_inc_button, 20, 20);
   gtk_widget_set_can_focus(scale_inc_button, FALSE);
   g_signal_connect(scale_inc_button, "clicked", G_CALLBACK(scale_inc_button_call), shared_data);
-  g_signal_connect(scale_inc_button, "clicked", G_CALLBACK(update_scale_label), scale_label);
 
+  /* default_button */
+  gtk_widget_set_size_request(scale_default_button, 20, 20);
+  gtk_widget_set_can_focus(scale_default_button, FALSE);
+  g_signal_connect(scale_default_button, "clicked", G_CALLBACK(default_scale_button_call), shared_data);
+
+  /* scale_dec_button */
+  gtk_widget_set_size_request(scale_dec_button, 20, 20);
+  gtk_widget_set_can_focus(scale_dec_button, FALSE);
+  g_signal_connect(scale_dec_button, "clicked", G_CALLBACK(scale_dec_button_call), shared_data);
+  
+  /* adding widgets to container */
   gtk_container_add(GTK_CONTAINER(button_box), scale_inc_button);
-  gtk_container_add(GTK_CONTAINER(button_box), scale_label);
+  gtk_container_add(GTK_CONTAINER(button_box), scale_default_button);
   gtk_container_add(GTK_CONTAINER(button_box), scale_dec_button);
 
   return button_box;
 }
+
+/**************************************************/
+/* Preview Mode Widgets and Methods */
 
 void change_preview_mode_label(GtkWidget* set_widget, gpointer preview_mode_menu_button) {
   const gchar* label = gtk_menu_item_get_label(GTK_MENU_ITEM(set_widget));
@@ -78,7 +82,6 @@ void update_image_preview(GtkWidget* set_widget, SharedData* shared_data) {
   }
 
   update_image(shared_data);
-  //submit_task(shared_data->thread_pool, (void*)update_image, shared_data);
   return;
 }
 
@@ -111,6 +114,9 @@ GtkWidget* preview_mode_widgets_get(SharedData* shared_data) {
 
   return preview_mode_menu_button;
 }
+
+/**************************************************/
+/* Options Bar */
 
 GtkWidget* options_bar_get(SharedData* shared_data) {
   scale_factor = 1.0;

@@ -69,16 +69,17 @@ void h_get_fits_img_data(fitsfile* fitsfile_ptr, float** image_data) {
 }
 
 /* START opaque functions for data scaling */
-float linear_scale_func(float data_val) {
-  return data_val;
+void linear_scale_func(float* data_val) {
+  return;
 }
 
-float square_root_scale_func(float data_val) {
-  return sqrt(data_val);
+void square_root_scale_func(float* data_val) {
+  *data_val = sqrt(*data_val);
+  return;
 }
 
-float autostretch_scale_func(float data_val) {
-  return data_val;
+void autostretch_scale_func(float* data_val) {
+  return;
 }
 /* END opaque functions for data scaling */
 
@@ -90,13 +91,27 @@ void* h_get_scaling_function(enum PreviewMode preview_mode) {
 
 
 void h_scale_img_data(float** img_data, int pixel_count, void (scaling_func)(float*)) {
-  for (int i = 0; i < pixel_count; i++) {
+  int i = 0;
+
+  for (; i < pixel_count; i++) {
     scaling_func((*img_data) + i);
   }
+
+  /*
+   * This reduces execution time by several miliseconds
+   * some more testing needs to be done by will switch so this implementation later
+  for (; i < pixel_count; i += 4) {
+    scaling_func((*img_data) + i);
+    scaling_func((*img_data) + i + 1);
+    scaling_func((*img_data) + i + 2);
+    scaling_func((*img_data) + i + 3);
+  }
+  */
+
   return;
 }
 
-void h_fits_img_data_to_pixbuf_format(fitsfile* fitsfile_ptr, float** img_data, guchar** pixbuf_data, int pixel_count, int preview_mode) {
+void h_fits_img_data_to_pixbuf_format(fitsfile* fitsfile_ptr, float** img_data, guchar** pixbuf_data, int pixel_count) {
   int status = 0;
 
   int maxdim = 0;
