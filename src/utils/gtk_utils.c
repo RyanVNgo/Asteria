@@ -1,5 +1,5 @@
-#include "app_gtk_helper.h"
-#include "gtk/gtk.h"
+/* primary header include */
+#include "gtk_utils.h"
 
 GtkWidget* hgtk_menu_item_with_submenu_init(const char* label) {
   GtkWidget* new_menu_item = gtk_menu_item_new_with_label(label);

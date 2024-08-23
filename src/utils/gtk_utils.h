@@ -1,6 +1,7 @@
-#ifndef MENU_FACTORY_H
-#define MENU_FACTORY_H
+#ifndef GTK_UTILS_H
+#define GTK_UTILS_H
 
+/* external libraries */
 #include <gtk/gtk.h>
 
 GtkWidget* hgtk_menu_item_with_submenu_init(const char* label);

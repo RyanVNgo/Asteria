@@ -1,9 +1,7 @@
+/* primary header include */
 #include "threads.h"
-#include "glib.h"
-#include <bits/pthreadtypes.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
+
+/* external libraries */
 #include <gtk/gtk.h>
 #include <stdatomic.h>
 

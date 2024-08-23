@@ -1,12 +1,13 @@
-#include "fitsio.h"
+/* primary header include */
+#include "menu_bar.h"
 
-#include "main_menu_bar.h"
-#include "main_image_display.h"
+/* external libraries */
+#include <fitsio.h>
 
-#include "app_gtk_helper.h"
-#include "app_glib_helper.h"
-#include "app_cfitsio_helper.h"
-#include "shared_data.h"
+/* project files */
+#include "../controllers/file_controller.h"
+#include "../controllers/image_controller.h"
+#include "../utils/gtk_utils.h"
 
 gboolean on_window_delete(GtkWidget* widget, gpointer data) {
   gtk_widget_hide(widget);
@@ -25,54 +26,15 @@ static void on_window_activate(GtkWidget* menu_item, gpointer window) {
 /* File */
 
 void open_item_activate(GtkWidget* menu_item, SharedData* shared_data) {
-  char* file_absolute_path = hglib_get_absolute_path();
-  if (!file_absolute_path) return;
-
-  int status = 0;
-  fitsfile* temp_file_ptr;
-
-  fits_open_file(&temp_file_ptr, file_absolute_path, READONLY, &status);
-  if (status) {
-    fits_report_error(stderr, status);
-    return;
-  }
-
+  get_fitsfile(&shared_data->current_file);
   if (shared_data->current_file) {
-    fits_close_file(shared_data->current_file, &status);
-    if (status) {
-      fits_report_error(stderr, status);
-      return;
-    }
-  }
-
-  shared_data->current_file = temp_file_ptr;
-
-  if (shared_data->current_file && !status) {
-    g_print("File -> Open: %s\n", file_absolute_path);
-    main_image_display_load_new_image(shared_data->thread_pool, &shared_data->current_file);
-  } else {
-    g_print("File -> Open: ERROR\n");
-    fits_report_error(stderr, status);
-  }
-
+    load_new_image(shared_data);
+  } 
   return;
 }
 
 void saveas_item_activate(GtkWidget* menu_item, SharedData* shared_data) {
-  if (shared_data->current_file == NULL) return;
-
-  int status = 0;
-  char* saveas_absolute_path = hglib_saveas_absolute_path();
-
-  if (!saveas_absolute_path) return;
-  hcfitsio_save_file(&shared_data->current_file, saveas_absolute_path, &status);
-
-  if (!status) {
-    g_print("File -> Save As: %s\n", saveas_absolute_path);
-  } else {
-    fits_report_error(stderr, status);
-  }
-
+  save_as_fitsfile(shared_data->current_file);
   return;
 }
 
@@ -82,13 +44,11 @@ static GtkWidget* menu_bar_file_item(SharedData* shared_data) {
   GtkWidget* open_item = gtk_menu_item_new_with_label("Open");
   g_signal_connect(open_item, "activate", G_CALLBACK(open_item_activate), shared_data);
 
-  GtkWidget* save_item = gtk_menu_item_new_with_label("Save");
 
   GtkWidget* saveas_item = gtk_menu_item_new_with_label("Save As");
   g_signal_connect(saveas_item, "activate", G_CALLBACK(saveas_item_activate), shared_data);
 
   hgtk_menu_item_add_menu_item(file_item, open_item);
-  hgtk_menu_item_add_menu_item(file_item, save_item);
   hgtk_menu_item_add_menu_item(file_item, saveas_item);
 
   return file_item;
@@ -97,29 +57,31 @@ static GtkWidget* menu_bar_file_item(SharedData* shared_data) {
 /**************************************************/
 /* Info */
 
-void headers_item_activate(GtkWidget* menu_item, fitsfile** current_file_ptr) {
-  if (!*current_file_ptr) return;
-  int status = 0;
-  int card_count;
+void headers_item_activate(GtkWidget* menu_item, fitsfile* current_file_ptr) {
+  if (!current_file_ptr) return;
 
-  fits_get_hdrspace(*current_file_ptr, &card_count, NULL, &status);
-  if (status) return fits_report_error(stderr, status);
+  GtkWidget* headers_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW(headers_window), "Headers");
+  gtk_window_set_resizable(GTK_WINDOW(headers_window), FALSE);
+  gtk_container_set_border_width(GTK_CONTAINER(headers_window), 15);
 
-  char card[FLEN_CARD];
-  int i = 1;
-  for(; i < card_count; i++) {
-    fits_read_record(*current_file_ptr, i, card, &status);
-    g_print("%s\n", card);
-  }
+  char* header_text = get_headers_as_string(current_file_ptr);
+  GtkWidget* header_label = gtk_label_new(header_text);
+  gtk_label_set_justify(GTK_LABEL(header_label), GTK_JUSTIFY_LEFT);
 
+  gtk_container_add(GTK_CONTAINER(headers_window), header_label);
+
+  gtk_widget_show_all(headers_window);
+
+  free(header_text);
   return;
 }
 
-static GtkWidget* menu_bar_info_item(fitsfile** current_file_ptr) {
+static GtkWidget* menu_bar_info_item(SharedData* shared_data) {
   GtkWidget* info_item = hgtk_menu_item_with_submenu_init("Info");
 
   GtkWidget* headers_item = gtk_menu_item_new_with_label("Headers");
-  g_signal_connect(headers_item, "activate", G_CALLBACK(headers_item_activate), current_file_ptr);
+  g_signal_connect(headers_item, "activate", G_CALLBACK(headers_item_activate), shared_data->current_file);
 
   hgtk_menu_item_add_menu_item(info_item, headers_item);
 
@@ -167,12 +129,12 @@ static GtkWidget* menu_bar_help_item() {
 /**************************************************/
 /* Menu Bar */
 
-GtkWidget* main_menu_bar_get(SharedData* shared_data) {
+GtkWidget* menu_bar_get(SharedData* shared_data) {
   GtkWidget* menu_bar = gtk_menu_bar_new();
   
   GtkWidget* file_item = menu_bar_file_item(shared_data);
   GtkWidget* help_item = menu_bar_help_item();
-  GtkWidget* info_item = menu_bar_info_item(&shared_data->current_file);
+  GtkWidget* info_item = menu_bar_info_item(shared_data);
 
   gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), file_item);
   gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), info_item);
