@@ -85,7 +85,24 @@ void square_root_scale_func(float** img_data, int pixel_count) {
   return;
 }
 
-void autostretch_scale_func(float** img_data, int pixel_count, int dim_count) {
+void autostretch_scale_thread_func(void* args_in) {
+  struct func_args {
+    ThreadMonitor* thread_monitor;
+    float* img_data;
+    int pixel_count;
+    float pow_val;
+  };
+  struct func_args* args = (struct func_args*)args_in;
+
+  for (int i = 0; i < args->pixel_count; i++) {
+    *(args->img_data + i) = pow(*(args->img_data + i), args->pow_val);
+  }
+
+  thread_monitor_signal(args->thread_monitor);
+  return;
+}
+
+void autostretch_scale_func(ThreadPool* thread_pool, float** img_data, int pixel_count, int dim_count) {
   int channel_size = pixel_count / dim_count;
   float dim_avg[dim_count];
   float pow_val[dim_count];
@@ -104,7 +121,43 @@ void autostretch_scale_func(float** img_data, int pixel_count, int dim_count) {
     pow_val[c] = log(t_val) / log(dim_avg[c]);
   }
 
-  /* autostretch data */
+
+  /* multi-threaded implementation START */
+
+  /* define arg struct */
+  struct func_args {
+    ThreadMonitor* thread_monitor;
+    float* img_data;
+    int pixel_count;
+    float pow_val;
+  };
+  
+  /* make thread monitor */
+  int task_count = 3;
+  ThreadMonitor* thread_monitor = thread_monitor_init(task_count);
+
+  /* submit tasks */
+  struct func_args* task_args[task_count];
+  for (int t = 0; t < task_count; t++) {
+    task_args[t] = malloc(sizeof(struct func_args));
+    task_args[t]->thread_monitor = thread_monitor;
+    task_args[t]->img_data = *img_data + (channel_size * t);
+    task_args[t]->pixel_count = channel_size;
+    task_args[t]->pow_val = pow_val[t];
+    submit_task(thread_pool, autostretch_scale_thread_func, task_args[t]);
+  }
+
+  /* wait for threads to finish */
+  thread_monitor_wait(thread_monitor);
+  thread_monitor_destroy(thread_monitor);
+
+  /* deallocate data */
+  for (int t = 0; t < task_count; t++) free(task_args[t]);
+
+  /* multi-threaded implementation END */
+
+  /* single threaded implementation */
+  /*
   int pxl_idx = 0;
   for (c = 0; c < dim_count; c++) {
     i = 0;
@@ -113,14 +166,15 @@ void autostretch_scale_func(float** img_data, int pixel_count, int dim_count) {
       *(*img_data + pxl_idx) = pow(*(*img_data + pxl_idx), pow_val[c]);
     }
   }
+  */
 
   return;
 }
 /* END opaque functions for data scaling */
 
-void h_scale_img_data(float** img_data, int pixel_count, int dim_count, enum PreviewMode preview_mode) {
+void h_scale_img_data(ThreadPool* thread_pool, float** img_data, int pixel_count, int dim_count, enum PreviewMode preview_mode) {
   if (preview_mode == SQUARE_ROOT) square_root_scale_func(img_data, pixel_count);
-  if (preview_mode == AUTOSTRETCH) autostretch_scale_func(img_data, pixel_count, dim_count);
+  if (preview_mode == AUTOSTRETCH) autostretch_scale_func(thread_pool, img_data, pixel_count, dim_count);
   return;
 }
 
