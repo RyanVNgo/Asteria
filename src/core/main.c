@@ -46,12 +46,20 @@ int main(int argc, char* argv[]) {
   int status;
   
   ThreadPool* thread_pool;
-  const int max_threads = 4; /* This must always be greater than 0 */
-  thread_pool = thread_pool_init(max_threads);
+
+  uint number_of_processors = sysconf(_SC_NPROCESSORS_ONLN);
+  int default_thread_count = number_of_processors;
+
+  int thread_count = default_thread_count; 
+  if (argc == 2) thread_count = atoi(argv[1]);
+  if (thread_count < 1 || thread_count > number_of_processors) thread_count = default_thread_count;
+  g_print("Utilizing %d threads\n", thread_count);
+
+  thread_pool = thread_pool_init(thread_count);
   
   app = gtk_application_new("org.gtk.asteria", G_APPLICATION_DEFAULT_FLAGS);
   g_signal_connect(app, "activate", G_CALLBACK(asteria_activate), thread_pool);
-  status = g_application_run(G_APPLICATION(app), argc, argv);
+  status = g_application_run(G_APPLICATION(app), 0, NULL);
   g_object_unref(app);
 
   thread_pool_shutdown(thread_pool);

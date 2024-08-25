@@ -5,6 +5,7 @@
 #include "../utils/fits_utils.h"
 #include "../utils/display_img_utils.h"
 #include <bits/time.h>
+#include <stdint.h>
 
 void load_new_image(SharedData* shared_data) {
   if (!shared_data->current_file) return;
@@ -52,7 +53,6 @@ void load_new_image(SharedData* shared_data) {
   return;
 }
 
-#include <time.h>
 void update_image(SharedData* shared_data) {
   if (!shared_data->current_file) return;
 
@@ -61,19 +61,12 @@ void update_image(SharedData* shared_data) {
   h_fits_img_dim_size(shared_data->current_file, dim_size);
   
   int pixel_count = h_fits_img_pxl_count(shared_data->current_file);
+
   float* img_data;
   h_get_fits_img_data(shared_data->current_file, &img_data);
 
-  struct timespec start, finish;
-  clock_gettime(CLOCK_MONOTONIC, &start);
-
   h_scale_img_data(shared_data->thread_pool, &img_data, pixel_count, dim_count, shared_data->preview_mode);
-
-  clock_gettime(CLOCK_MONOTONIC, &finish);
-  double elapsed = finish.tv_sec - start.tv_sec;
-  elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
-  g_print("Time elapsed: %6.1f milliseconds\n", elapsed * 1000);
-
+ 
   guchar* pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
   h_fits_img_data_to_pixbuf_format(
       shared_data->current_file,
