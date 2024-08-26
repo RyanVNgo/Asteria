@@ -14,7 +14,10 @@ static void asteria_activate(GtkApplication* app, gpointer thread_pool_in) {
 
   SharedData* shared_data = malloc(sizeof(SharedData));
   shared_data->thread_pool = thread_pool;
+
   shared_data->current_file = NULL;
+  shared_data->fits_data = NULL;
+
   shared_data->unscaled_pixbuf = NULL;
   shared_data->display_scale = 1.0;
   shared_data->preview_mode = LINEAR;

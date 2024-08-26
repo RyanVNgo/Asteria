@@ -4,8 +4,6 @@
 /* external libraries */
 #include <math.h>
 
-#define GUCHAR_MAX 255
-
 int bitpix_to_datatype(int bitpix) {
   switch(bitpix) {
     case BYTE_IMG:
@@ -68,43 +66,42 @@ void h_get_fits_img_data(fitsfile* fitsfile_ptr, float** image_data) {
   return;
 }
 
-/* START opaque functions for data scaling */
-void square_root_scale_func(float** img_data, int pixel_count) {
-  int i = 0;
-  for (; i < pixel_count - 4 ; i += 4) {
-    *(*img_data + i) = sqrt(*(*img_data + i));
-    *(*img_data + i + 1) = sqrt(*(*img_data + i + 1));
-    *(*img_data + i + 2) = sqrt(*(*img_data + i + 2));
-    *(*img_data + i + 3) = sqrt(*(*img_data + i + 3));
+void h_float_to_uint16_array(float** float_data, uint16_t** uint16_buff, int pixel_count) {
+  for (int i = 0; i < pixel_count; i++) {
+    *(*uint16_buff + i) = (uint16_t)(*(*float_data + i) * UINT16_MAX);
   }
-
-  for (; i < pixel_count; i++) {
-    *(*img_data + i) = sqrt(*(*img_data + i));
-  }
-
   return;
 }
 
-void autostretch_scale_thread_func(void* args_in) {
+/* START opaque functions for data scaling */
+void square_root_uint16_func(uint16_t** img_data, int pixel_count) {
+  int i = 0;
+  for (; i < pixel_count; i++) {
+    *(*img_data + i) = sqrt(*(*img_data + i) /  (float)UINT16_MAX) * UINT16_MAX;
+  }
+  return;
+}
+
+void autostretch_uint16_thread_func(void* args_in) {
   struct func_args {
     ThreadMonitor* thread_monitor;
-    float* img_data;
+    uint16_t* img_data;
     int pixel_count;
     float pow_val;
   };
   struct func_args* args = (struct func_args*)args_in;
 
   for (int i = 0; i < args->pixel_count; i++) {
-    *(args->img_data + i) = pow(*(args->img_data + i), args->pow_val);
+    *(args->img_data + i) = pow(*(args->img_data + i) / (float)UINT16_MAX, args->pow_val) * UINT16_MAX;
   }
 
   thread_monitor_signal(args->thread_monitor);
   return;
 }
 
-void autostretch_scale_func(ThreadPool* thread_pool, float** img_data, int pixel_count, int dim_count) {
+void autostretch_uint16_func(ThreadPool* thread_pool, uint16_t** fits_data, int pixel_count, int dim_count) {
   int channel_size = pixel_count / dim_count;
-  float dim_avg[dim_count];
+  unsigned long long dim_avg[dim_count];
   float pow_val[dim_count];
   float t_val = 0.2;
 
@@ -115,19 +112,18 @@ void autostretch_scale_func(ThreadPool* thread_pool, float** img_data, int pixel
     dim_avg[c] = 0;
     i = 0;
     for(; i < channel_size; i++) {
-      dim_avg[c] += *(*img_data + i + (channel_size * c));
+      dim_avg[c] += *(*fits_data+ i + (channel_size * c));
     }
     dim_avg[c] /= channel_size;
-    pow_val[c] = log(t_val) / log(dim_avg[c]);
+    pow_val[c] = log(t_val) / log(dim_avg[c] / (float)UINT16_MAX);
   }
-
 
   /* multi-threaded implementation START */
 
   /* define arg struct */
   struct func_args {
     ThreadMonitor* thread_monitor;
-    float* img_data;
+    uint16_t* img_data;
     int pixel_count;
     float pow_val;
   };
@@ -141,10 +137,10 @@ void autostretch_scale_func(ThreadPool* thread_pool, float** img_data, int pixel
   for (int t = 0; t < task_count; t++) {
     task_args[t] = malloc(sizeof(struct func_args));
     task_args[t]->thread_monitor = thread_monitor;
-    task_args[t]->img_data = *img_data + (channel_size * t);
+    task_args[t]->img_data = *fits_data + (channel_size * t);
     task_args[t]->pixel_count = channel_size;
     task_args[t]->pow_val = pow_val[t];
-    submit_task(thread_pool, autostretch_scale_thread_func, task_args[t]);
+    submit_task(thread_pool, autostretch_uint16_thread_func, task_args[t]);
   }
 
   /* wait for threads to finish */
@@ -153,28 +149,35 @@ void autostretch_scale_func(ThreadPool* thread_pool, float** img_data, int pixel
 
   /* deallocate data */
   for (int t = 0; t < task_count; t++) free(task_args[t]);
-
+  
   /* multi-threaded implementation END */
-
-  /* single threaded implementation */
-  /*
-  int pxl_idx = 0;
-  for (c = 0; c < dim_count; c++) {
-    i = 0;
-    for(; i < channel_size; i++) {
-      pxl_idx = i + (channel_size * c);
-      *(*img_data + pxl_idx) = pow(*(*img_data + pxl_idx), pow_val[c]);
-    }
-  }
-  */
 
   return;
 }
-/* END opaque functions for data scaling */
 
-void h_scale_img_data(ThreadPool* thread_pool, float** img_data, int pixel_count, int dim_count, enum PreviewMode preview_mode) {
-  if (preview_mode == SQUARE_ROOT) square_root_scale_func(img_data, pixel_count);
-  if (preview_mode == AUTOSTRETCH) autostretch_scale_func(thread_pool, img_data, pixel_count, dim_count);
+void h_scale_fits_data(
+    ThreadPool* thread_pool,
+    uint16_t** fits_data,
+    int pixel_count,
+    int dim_count,
+    enum PreviewMode preview_mode
+    ) {
+
+  if (preview_mode == SQUARE_ROOT) square_root_uint16_func(fits_data, pixel_count);
+  if (preview_mode == AUTOSTRETCH) autostretch_uint16_func(thread_pool, fits_data, pixel_count, dim_count);
+  return;
+}
+
+void h_uint16_to_pixbuf_format(uint16_t** uint16_data, guchar** pixbuf_buff, int pixel_count) {
+  int channel_size = pixel_count / 3;
+  for (int c = 0; c < 3; c++) {
+    int i = c;
+    for (int p = c * channel_size; p < (c + 1) * channel_size; p++) {
+      (*pixbuf_buff)[i] = (*uint16_data)[p]  / UCHAR_MAX;
+      if ((*pixbuf_buff)[i] > UCHAR_MAX) (*pixbuf_buff)[i] = UCHAR_MAX;
+      i += 3;
+    }
+  }
   return;
 }
 
@@ -191,8 +194,8 @@ void h_fits_img_data_to_pixbuf_format(fitsfile* fitsfile_ptr, float** img_data, 
   for (int c = 0; c < naxes[2]; c++) {
     int i = c;
     for (int p = c* channel_size; p < (c+1) * channel_size; p++) {
-      (*pixbuf_data)[i] = (*img_data)[p] * GUCHAR_MAX; 
-      if ((*pixbuf_data)[i] > GUCHAR_MAX) (*pixbuf_data)[i] = GUCHAR_MAX;
+      (*pixbuf_data)[i] = (*img_data)[p] * UCHAR_MAX; 
+      if ((*pixbuf_data)[i] > UCHAR_MAX) (*pixbuf_data)[i] = UCHAR_MAX;
       i += 3;
     }
   }

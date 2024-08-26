@@ -4,8 +4,7 @@
 /* project files */
 #include "../utils/fits_utils.h"
 #include "../utils/display_img_utils.h"
-#include <bits/time.h>
-#include <stdint.h>
+#include <string.h>
 
 void load_new_image(SharedData* shared_data) {
   if (!shared_data->current_file) return;
@@ -16,18 +15,19 @@ void load_new_image(SharedData* shared_data) {
   
   int pixel_count = h_fits_img_pxl_count(shared_data->current_file);
 
-  float* img_data; 
-  h_get_fits_img_data(shared_data->current_file, &img_data);
+  float* temp_float_data; 
+  h_get_fits_img_data(shared_data->current_file, &temp_float_data);
 
-  h_scale_img_data(shared_data->thread_pool, &img_data, pixel_count, dim_count, shared_data->preview_mode);
+  if (shared_data->fits_data) free(shared_data->fits_data);
+  shared_data->fits_data = (uint16_t*)malloc(sizeof(uint16_t) * pixel_count);
+  h_float_to_uint16_array(&temp_float_data, &shared_data->fits_data, pixel_count);
+  
+  uint16_t* temp_uint16_data = malloc(sizeof(uint16_t) * pixel_count);
+  memcpy(temp_uint16_data, shared_data->fits_data, sizeof(uint16_t) * pixel_count);
+  h_scale_fits_data(shared_data->thread_pool, &temp_uint16_data, pixel_count, dim_count, shared_data->preview_mode);
 
   guchar* pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
-  h_fits_img_data_to_pixbuf_format(
-      shared_data->current_file, 
-      &img_data, 
-      &pixbuf_data, 
-      pixel_count
-      );
+  h_uint16_to_pixbuf_format(&temp_uint16_data, &pixbuf_data, pixel_count);
   
   GdkPixbuf* base_pixbuf = gdk_pixbuf_new_from_data(
       pixbuf_data,
@@ -49,31 +49,36 @@ void load_new_image(SharedData* shared_data) {
   shared_data->display_scale = 1.0;
   h_display_img_adj_scale(shared_data->display_image, shared_data->unscaled_pixbuf, shared_data->display_scale);
 
-  free(img_data);
+  free(temp_float_data);
+  free(temp_uint16_data);
   return;
 }
 
+#include "../core/bench_timer.h"
 void update_image(SharedData* shared_data) {
+  BenchTimer* bench_timer;
+  bench_timer_start(&bench_timer, "Update_image");
+
   if (!shared_data->current_file) return;
 
   int dim_count = h_fits_img_dim_count(shared_data->current_file);
+  bench_timer_interval(bench_timer, "dim_count");
+  
   long dim_size[dim_count];
   h_fits_img_dim_size(shared_data->current_file, dim_size);
+  bench_timer_interval(bench_timer, "dim_size");
   
   int pixel_count = h_fits_img_pxl_count(shared_data->current_file);
+  bench_timer_interval(bench_timer, "pxl_count");
 
-  float* img_data;
-  h_get_fits_img_data(shared_data->current_file, &img_data);
+  uint16_t* temp_data = malloc(sizeof(uint16_t) * pixel_count);
+  memcpy(temp_data, shared_data->fits_data, sizeof(uint16_t) * pixel_count);
+  h_scale_fits_data(shared_data->thread_pool, &temp_data, pixel_count, dim_count, shared_data->preview_mode);
+  bench_timer_interval(bench_timer, "scale_data");
 
-  h_scale_img_data(shared_data->thread_pool, &img_data, pixel_count, dim_count, shared_data->preview_mode);
- 
   guchar* pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
-  h_fits_img_data_to_pixbuf_format(
-      shared_data->current_file,
-      &img_data,
-      &pixbuf_data,
-      pixel_count
-      );
+  h_uint16_to_pixbuf_format(&temp_data, &pixbuf_data, pixel_count);
+  bench_timer_interval(bench_timer, "uint16_to_pixbuf");
 
   GdkPixbuf* new_pixbuf = gdk_pixbuf_new_from_data(
       pixbuf_data,
@@ -94,8 +99,9 @@ void update_image(SharedData* shared_data) {
   shared_data->unscaled_pixbuf = new_pixbuf;
   h_display_img_adj_scale(shared_data->display_image, shared_data->unscaled_pixbuf, shared_data->display_scale);
 
-  //free(pixbuf_data);
-  free(img_data);
+  bench_timer_interval(bench_timer, "pixbuf_adj_scale");
+
+  free(temp_data);
   return;
 }
 
