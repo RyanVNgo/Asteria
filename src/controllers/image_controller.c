@@ -4,6 +4,8 @@
 /* project files */
 #include "../utils/fits_utils.h"
 #include "../utils/display_img_utils.h"
+#include "../utils/data_conversion.h"
+#include "../utils/image_operations.h"
 
 void load_new_image(SharedData* shared_data) {
   if (!shared_data->current_file) return;
@@ -19,14 +21,14 @@ void load_new_image(SharedData* shared_data) {
 
   if (shared_data->fits_data) free(shared_data->fits_data);
   shared_data->fits_data = (uint16_t*)malloc(sizeof(uint16_t) * pixel_count);
-  h_float_to_uint16_array(&temp_float_data, &shared_data->fits_data, pixel_count);
+  h_float_to_uint16(&temp_float_data, &shared_data->fits_data, pixel_count);
   
   uint16_t* temp_uint16_data = malloc(sizeof(uint16_t) * pixel_count);
   memcpy(temp_uint16_data, shared_data->fits_data, sizeof(uint16_t) * pixel_count);
-  h_scale_fits_data(shared_data->thread_pool, &temp_uint16_data, pixel_count, dim_count, shared_data->preview_mode);
+  h_stretch_img_data(shared_data->thread_pool, &temp_uint16_data, pixel_count, dim_count, shared_data->preview_mode);
 
-  guchar* pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
-  h_uint16_to_pixbuf_format(&temp_uint16_data, &pixbuf_data, pixel_count);
+  uint8_t* pixbuf_data = (uint8_t*)malloc(sizeof(uint8_t) * pixel_count);
+  h_uint16_to_uint8_format(&temp_uint16_data, &pixbuf_data, pixel_count);
   
   GdkPixbuf* base_pixbuf = gdk_pixbuf_new_from_data(
       pixbuf_data,
@@ -62,15 +64,15 @@ void update_image(SharedData* shared_data) {
   
   int pixel_count = h_fits_img_pxl_count(shared_data->current_file);
 
-  guchar* pixbuf_data = (guchar*)malloc(sizeof(guchar) * pixel_count);
+  uint8_t* pixbuf_data = (uint8_t*)malloc(sizeof(uint8_t) * pixel_count);
   if (shared_data->preview_mode != LINEAR) {
     uint16_t* temp_data = malloc(sizeof(uint16_t) * pixel_count);
     memcpy(temp_data, shared_data->fits_data, sizeof(uint16_t) * pixel_count);
-    h_scale_fits_data(shared_data->thread_pool, &temp_data, pixel_count, dim_count, shared_data->preview_mode);
-    h_uint16_to_pixbuf_format(&temp_data, &pixbuf_data, pixel_count);
+    h_stretch_img_data(shared_data->thread_pool, &temp_data, pixel_count, dim_count, shared_data->preview_mode);
+    h_uint16_to_uint8_format(&temp_data, &pixbuf_data, pixel_count);
     free(temp_data);
   } else {
-    h_uint16_to_pixbuf_format(&shared_data->fits_data, &pixbuf_data, pixel_count);
+    h_uint16_to_uint8_format(&shared_data->fits_data, &pixbuf_data, pixel_count);
   }
 
 
