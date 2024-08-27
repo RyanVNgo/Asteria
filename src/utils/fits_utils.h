@@ -19,7 +19,6 @@ void h_float_to_uint16_array(float** float_data, uint16_t** uint16_buff, int pix
 void h_scale_fits_data(ThreadPool* thread_pool, uint16_t** fits_data, int pixel_count, int dim_count, enum PreviewMode preview_mode);
 
 void h_uint16_to_pixbuf_format(uint16_t** uint16_data, guchar** pixbuf_buff, int pixel_count);
-void h_fits_img_data_to_pixbuf_format(fitsfile* fitsfile_ptr, float** img_data, guchar** pixbuf_data, int pixel_count);
 
 /********************************************************************************/
 /* file routines */
