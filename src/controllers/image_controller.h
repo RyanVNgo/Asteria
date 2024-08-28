@@ -1,11 +1,11 @@
 #ifndef IMAGE_CONTROLLER_H
 #define IMAGE_CONTROLLER_H
 
-/* external libraries */
-#include <gtk/gtk.h>
-
 /* project files */
 #include "../core/shared_data.h"
+
+#define MAX_DISPLAY_SCALE 4.00
+#define MIN_DISPLAY_SCALE 0.25
 
 void load_new_image(SharedData* shared_data);
 void update_image(SharedData* shared_data);

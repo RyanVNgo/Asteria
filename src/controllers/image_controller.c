@@ -75,7 +75,6 @@ void update_image(SharedData* shared_data) {
     h_uint16_to_uint8_format(&shared_data->fits_data, &pixbuf_data, pixel_count);
   }
 
-
   GdkPixbuf* new_pixbuf = gdk_pixbuf_new_from_data(
       pixbuf_data,
       GDK_COLORSPACE_RGB,
@@ -96,12 +95,9 @@ void update_image(SharedData* shared_data) {
   return;
 }
 
-#define MAX_SCALE 4.00
-#define MIN_SCALE 0.25
-
 void image_scale_increase(SharedData* shared_data) {
   if (!shared_data->current_file) return;
-  if (shared_data->display_scale >= MAX_SCALE) return;
+  if (shared_data->display_scale >= MAX_DISPLAY_SCALE) return;
   shared_data->display_scale *= 2.0;
   h_display_img_adj_scale(shared_data->display_image, shared_data->unscaled_pixbuf, shared_data->display_scale);
   return;
@@ -116,7 +112,7 @@ void image_scale_default(SharedData* shared_data) {
 
 void image_scale_decrease(SharedData* shared_data) {
   if (!shared_data->current_file) return;
-  if (shared_data->display_scale <= MIN_SCALE) return;
+  if (shared_data->display_scale <= MAX_DISPLAY_SCALE) return;
   shared_data->display_scale /= 2.0;
   h_display_img_adj_scale(shared_data->display_image, shared_data->unscaled_pixbuf, shared_data->display_scale);
   return;

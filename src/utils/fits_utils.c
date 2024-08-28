@@ -1,6 +1,8 @@
 /* primary header include */
 #include "fits_utils.h"
 
+/* external libraries */
+#include <string.h>
 
 int bitpix_to_datatype(int bitpix) {
   switch(bitpix) {
@@ -89,7 +91,10 @@ void h_save_as_fits_file(fitsfile* fitsfile_ptr, char* fitsfile_absolute_path) {
   
   /* case for when file path already exists (overwriting an existing file) */
   if (status == FILE_NOT_CREATED) {
-    char* modified_absolute_path = g_strdup_printf("!%s", fitsfile_absolute_path);
+    char modified_absolute_path[FLEN_FILENAME];
+    modified_absolute_path[0] = '!';
+    strcat(modified_absolute_path + 1, fitsfile_absolute_path);
+    printf("%s\n", modified_absolute_path);
     fits_create_file(&new_fptr, modified_absolute_path, &status);
   }
   fits_copy_file(fitsfile_ptr, new_fptr, 1, 1, 1, &status);

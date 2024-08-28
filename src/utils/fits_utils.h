@@ -2,7 +2,6 @@
 #define FITS_UTILS_H
 
 /* external libraries */
-#include <gtk/gtk.h>
 #include <fitsio.h>
 
 /*
