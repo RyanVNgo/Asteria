@@ -14,4 +14,7 @@ void image_scale_increase(SharedData* shared_data);
 void image_scale_default(SharedData* shared_data);
 void image_scale_decrease(SharedData* shared_data);
 
+void image_vertical_flip(SharedData* shared_data);
+void image_horizontal_flip(SharedData* shared_data);
+
 #endif

@@ -28,7 +28,7 @@ void load_new_image(SharedData* shared_data) {
   h_stretch_img_data(shared_data->thread_pool, &temp_uint16_data, pixel_count, dim_count, shared_data->preview_mode);
 
   uint8_t* pixbuf_data = (uint8_t*)malloc(sizeof(uint8_t) * pixel_count);
-  h_uint16_to_uint8_format(&temp_uint16_data, &pixbuf_data, pixel_count);
+  h_uint16_to_pixbuf_format(&temp_uint16_data, &pixbuf_data, pixel_count);
   
   GdkPixbuf* base_pixbuf = gdk_pixbuf_new_from_data(
       pixbuf_data,
@@ -69,10 +69,10 @@ void update_image(SharedData* shared_data) {
     uint16_t* temp_data = malloc(sizeof(uint16_t) * pixel_count);
     memcpy(temp_data, shared_data->fits_data, sizeof(uint16_t) * pixel_count);
     h_stretch_img_data(shared_data->thread_pool, &temp_data, pixel_count, dim_count, shared_data->preview_mode);
-    h_uint16_to_uint8_format(&temp_data, &pixbuf_data, pixel_count);
+    h_uint16_to_pixbuf_format(&temp_data, &pixbuf_data, pixel_count);
     free(temp_data);
   } else {
-    h_uint16_to_uint8_format(&shared_data->fits_data, &pixbuf_data, pixel_count);
+    h_uint16_to_pixbuf_format(&shared_data->fits_data, &pixbuf_data, pixel_count);
   }
 
   GdkPixbuf* new_pixbuf = gdk_pixbuf_new_from_data(
@@ -95,6 +95,7 @@ void update_image(SharedData* shared_data) {
   return;
 }
 
+
 void image_scale_increase(SharedData* shared_data) {
   if (!shared_data->current_file) return;
   if (shared_data->display_scale >= MAX_DISPLAY_SCALE) return;
@@ -112,8 +113,20 @@ void image_scale_default(SharedData* shared_data) {
 
 void image_scale_decrease(SharedData* shared_data) {
   if (!shared_data->current_file) return;
-  if (shared_data->display_scale <= MAX_DISPLAY_SCALE) return;
+  if (shared_data->display_scale <= MIN_DISPLAY_SCALE) return;
   shared_data->display_scale /= 2.0;
   h_display_img_adj_scale(shared_data->display_image, shared_data->unscaled_pixbuf, shared_data->display_scale);
+  return;
+}
+
+void image_vertical_flip(SharedData* shared_data) {
+  if (!shared_data->current_file) return;
+  h_display_img_flip(shared_data->display_image, &shared_data->unscaled_pixbuf, FALSE);
+  return;
+}
+
+void image_horizontal_flip(SharedData* shared_data) {
+  if (!shared_data->current_file) return;
+  h_display_img_flip(shared_data->display_image, &shared_data->unscaled_pixbuf, TRUE);
   return;
 }

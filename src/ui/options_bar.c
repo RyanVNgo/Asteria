@@ -3,6 +3,7 @@
 
 /* project files */
 #include "../controllers/image_controller.h"
+#include "gtk/gtk.h"
 
 /**************************************************/
 /* Scaling Widgets and Methods */
@@ -119,6 +120,54 @@ GtkWidget* preview_mode_widgets_get(SharedData* shared_data) {
 }
 
 /**************************************************/
+/* More Dsplay Modes Widgets and Methods */
+
+void horizontal_flip_activate(GtkWidget* button, SharedData* shared_data) {
+  image_horizontal_flip(shared_data);
+  return;
+}
+
+void vertical_flip_activate(GtkWidget* button, SharedData* shared_data) {
+  image_vertical_flip(shared_data);
+  return;
+}
+
+
+GtkWidget* more_display_modes_widgets_get(SharedData* shared_data) {
+  guint spacing = 5;
+
+  GtkWidget* button_grid = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(button_grid), spacing);
+  gtk_grid_set_column_spacing(GTK_GRID(button_grid), spacing);
+  gtk_grid_set_row_homogeneous(GTK_GRID(button_grid), TRUE);
+  gtk_grid_set_column_homogeneous(GTK_GRID(button_grid), TRUE);
+  
+  GtkWidget* horizontal_flip_button = gtk_button_new_with_label("HFlip");
+  GtkWidget* vertical_flip_button = gtk_button_new_with_label("VFlip");
+  GtkWidget* monochrome_button = gtk_button_new_with_label("M");
+
+  /* horizontal flip button  */
+  //gtk_widget_set_size_request(horizontal_flip_button, 20, 20);
+  gtk_widget_set_can_focus(horizontal_flip_button, FALSE);
+  g_signal_connect(horizontal_flip_button, "clicked", G_CALLBACK(horizontal_flip_activate), shared_data);
+
+  /* vertical flip button  */
+  //gtk_widget_set_size_request(vertical_flip_button, 20, 20);
+  gtk_widget_set_can_focus(vertical_flip_button, FALSE);
+  g_signal_connect(vertical_flip_button, "clicked", G_CALLBACK(vertical_flip_activate), shared_data);
+
+  /* monochrome button  */
+  //gtk_widget_set_size_request(monochrome_button, 20, 20);
+  gtk_widget_set_can_focus(monochrome_button, FALSE);
+
+  gtk_grid_attach(GTK_GRID(button_grid), horizontal_flip_button, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(button_grid), vertical_flip_button, 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(button_grid), monochrome_button, 1, 0, 1, 2);
+
+  return button_grid;
+}
+
+/**************************************************/
 /* Options Bar */
 
 GtkWidget* options_bar_get(SharedData* shared_data) {
@@ -127,6 +176,8 @@ GtkWidget* options_bar_get(SharedData* shared_data) {
   guint spacing = 5;
   GtkWidget* options_bar = gtk_grid_new();
   gtk_container_set_border_width(GTK_CONTAINER(options_bar), spacing);
+  gtk_grid_set_row_spacing(GTK_GRID(options_bar), spacing);
+  gtk_grid_set_column_spacing(GTK_GRID(options_bar), spacing);
 
   GtkWidget* scale_widgets = scale_widgets_get(shared_data);
   gtk_grid_attach(GTK_GRID(options_bar), scale_widgets, 0, 0, 1, 1);
@@ -134,8 +185,8 @@ GtkWidget* options_bar_get(SharedData* shared_data) {
   GtkWidget* preview_mode_widgets = preview_mode_widgets_get(shared_data);
   gtk_grid_attach(GTK_GRID(options_bar), preview_mode_widgets, 1, 0, 1, 1);
 
-  gtk_grid_set_row_spacing(GTK_GRID(options_bar), spacing);
-  gtk_grid_set_column_spacing(GTK_GRID(options_bar), spacing);
+  GtkWidget* more_display_modes_widgets = more_display_modes_widgets_get(shared_data);
+  gtk_grid_attach(GTK_GRID(options_bar), more_display_modes_widgets , 2, 0, 1, 1);
 
   return options_bar;
 }
