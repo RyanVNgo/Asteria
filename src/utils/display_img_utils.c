@@ -3,6 +3,7 @@
 
 void h_destroy_pixbuf_data(guchar* pixbuf_data, gpointer data) {
   free(pixbuf_data);
+  pixbuf_data = NULL;
   return;
 }
 
@@ -18,4 +19,3 @@ void h_display_img_adj_scale(GtkWidget* display_img, GdkPixbuf* unscaled_pixbuf,
   g_object_unref(scaled_pixbuf);
   return;
 }
-

@@ -2,21 +2,20 @@
 #define FITS_UTILS_H
 
 /* external libraries */
-#include <gtk/gtk.h>
 #include <fitsio.h>
 
-/* project files */
-#include "../core/shared_data.h"
-
+/*
+ * Methods for getting numerical representation of image parameters
+ */
 int h_fits_img_dim_count(fitsfile* fitsfile_ptr);
 void h_fits_img_dim_size(fitsfile* fitsfile_ptr, long* dim_size);
 LONGLONG h_fits_img_pxl_count(fitsfile* fitsfile_ptr);
 
+/*
+ * Retrieves raw data from fits file.
+ * Memory allocation for *image_data is not required.
+ */
 void h_get_fits_img_data(fitsfile* fitsfile_ptr, float** image_data);
-
-void h_scale_img_data(float** img_data, int pixel_count, int dim_count, enum PreviewMode preview_mode);
-
-void h_fits_img_data_to_pixbuf_format(fitsfile* fitsfile_ptr, float** img_data, guchar** pixbuf_data, int pixel_count);
 
 /********************************************************************************/
 /* file routines */

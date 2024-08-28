@@ -16,11 +16,15 @@ enum PreviewMode {
 
 typedef struct SharedData {
   ThreadPool* thread_pool;
+
   fitsfile* current_file;
+  uint16_t* fits_data;
+
   GtkWidget* display_image;
   GdkPixbuf* unscaled_pixbuf;
   float display_scale;
   enum PreviewMode preview_mode;
+
 } SharedData;
 
 #endif

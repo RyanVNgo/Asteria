@@ -1,7 +1,6 @@
 /* primary header include */
 #include "image_display.h"
 
-
 GtkWidget* image_display_get(SharedData* shared_data) {
   GtkWidget* image_grid = gtk_grid_new();
 

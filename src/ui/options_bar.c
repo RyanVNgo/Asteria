@@ -72,12 +72,15 @@ void change_preview_mode_label(GtkWidget* set_widget, gpointer preview_mode_menu
 
 void update_image_preview(GtkWidget* set_widget, SharedData* shared_data) {
   const gchar* label = gtk_menu_item_get_label(GTK_MENU_ITEM(set_widget));
-
+  
   if (!strcmp(label, "Linear")) {
+    if (shared_data->preview_mode == LINEAR) return;
     shared_data->preview_mode = LINEAR;
   } else if (!strcmp(label, "Square Root")) {
+    if (shared_data->preview_mode == SQUARE_ROOT) return;
     shared_data->preview_mode = SQUARE_ROOT;
   } else if (!strcmp(label, "Autostretch")) {
+    if (shared_data->preview_mode == AUTOSTRETCH) return;
     shared_data->preview_mode = AUTOSTRETCH;
   }
 
