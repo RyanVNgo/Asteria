@@ -20,11 +20,17 @@ void h_display_img_adj_scale(GtkWidget* display_img, GdkPixbuf* unscaled_pixbuf,
   return;
 }
 
+/* 
+ * DATA DEALLOCATION PROBLEM
+ */
 void h_display_img_flip(GtkWidget* display_img, GdkPixbuf** unscaled_pixbuf, gboolean horizontal) {
   *unscaled_pixbuf = gdk_pixbuf_flip(*unscaled_pixbuf, horizontal);
+
   GdkPixbuf* curr_pixbuf = gtk_image_get_pixbuf(GTK_IMAGE(display_img));
   GdkPixbuf* flipped_pixbuf = gdk_pixbuf_flip(curr_pixbuf, horizontal);
+
   gtk_image_set_from_pixbuf(GTK_IMAGE(display_img), flipped_pixbuf);
+
   g_object_unref(flipped_pixbuf);
   return;
 }

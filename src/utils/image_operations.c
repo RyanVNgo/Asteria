@@ -100,3 +100,29 @@ void h_stretch_img_data(
   return;
 }
 
+void h_vertical_flip_data(uint16_t** fits_data, long* dim_sizes) {
+  int channel_size = dim_sizes[0] * dim_sizes[1];
+  int width = dim_sizes[0];
+
+  uint16_t temp[width];
+  for (int c = 0; c < dim_sizes[2]; c++) {
+    uint16_t* first_row = *fits_data + (c * channel_size);
+    uint16_t* last_row = first_row + channel_size - width;
+    
+    while (first_row < last_row) {
+      memcpy(temp, first_row, sizeof(uint16_t) * width);
+      memcpy(first_row, last_row, sizeof(uint16_t) * width);
+      memcpy(last_row, temp, sizeof(uint16_t) * width);
+      first_row += width;
+      last_row -= width;
+    }
+  }
+
+  return;
+}
+
+void h_horizontal_flip_data(uint16_t** fits_data, long* dim_sizes) {
+
+  return;
+}
+
