@@ -59,7 +59,6 @@ void autostretch_uint16_func(ThreadPool* thread_pool, uint16_t** fits_data, int 
     uint16_t* img_data;
     int pixel_count;
     float mtf_val;
-    float shadow_ratio;
   };
   
   /* make thread monitor */
@@ -122,6 +121,7 @@ void h_vertical_flip_data(uint16_t** fits_data, long* dim_sizes) {
 }
 
 void h_horizontal_flip_data(uint16_t** fits_data, long* dim_sizes) {
+
 
   return;
 }

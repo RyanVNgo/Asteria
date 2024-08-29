@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
   uint number_of_processors = sysconf(_SC_NPROCESSORS_ONLN);
   int default_thread_count = number_of_processors;
 
-  int thread_count = default_thread_count; 
+  int thread_count = default_thread_count / 2; 
   if (argc == 2) thread_count = atoi(argv[1]);
   if (thread_count < 1 || thread_count > number_of_processors) thread_count = default_thread_count;
   g_print("Utilizing %d threads\n", thread_count);

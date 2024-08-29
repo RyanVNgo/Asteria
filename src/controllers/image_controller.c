@@ -127,7 +127,7 @@ void image_vertical_flip(SharedData* shared_data) {
   h_fits_img_dim_size(shared_data->current_file, dim_size);
   h_vertical_flip_data(&shared_data->fits_data, dim_size);
 
-  //h_display_img_flip(shared_data->display_image, &shared_data->unscaled_pixbuf, FALSE);
+  h_display_img_flip(shared_data->display_image, &shared_data->unscaled_pixbuf, FALSE);
   return;
 }
 
@@ -139,10 +139,6 @@ void image_horizontal_flip(SharedData* shared_data) {
   h_fits_img_dim_size(shared_data->current_file, dim_size);
   h_horizontal_flip_data(&shared_data->fits_data, dim_size);
 
-  int pixel_count = h_fits_img_pxl_count(shared_data->current_file);
-  uint8_t* pixbuf_data = (uint8_t*)malloc(sizeof(uint8_t) * pixel_count);
-  h_uint16_to_pixbuf_format(&shared_data->fits_data, &pixbuf_data, pixel_count);
-
-  //h_display_img_flip(shared_data->display_image, &shared_data->unscaled_pixbuf, TRUE);
+  h_display_img_flip(shared_data->display_image, &shared_data->unscaled_pixbuf, TRUE);
   return;
 }
