@@ -59,7 +59,6 @@ void autostretch_uint16_func(ThreadPool* thread_pool, uint16_t** fits_data, int 
     uint16_t* img_data;
     int pixel_count;
     float mtf_val;
-    float shadow_ratio;
   };
   
   /* make thread monitor */
@@ -97,6 +96,47 @@ void h_stretch_img_data(
     ) {
   if (preview_mode == SQUARE_ROOT) square_root_uint16_func(fits_data, pixel_count);
   if (preview_mode == AUTOSTRETCH) autostretch_uint16_func(thread_pool, fits_data, pixel_count, dim_count);
+  return;
+}
+
+void h_vertical_flip_data(uint16_t** fits_data, long* dim_sizes) {
+  int channel_size = dim_sizes[0] * dim_sizes[1];
+  int width = dim_sizes[0];
+
+  uint16_t temp[width];
+  for (int c = 0; c < dim_sizes[2]; c++) {
+    uint16_t* first_row = *fits_data + (c * channel_size);
+    uint16_t* last_row = first_row + channel_size - width;
+    
+    while (first_row < last_row) {
+      memcpy(temp, first_row, sizeof(uint16_t) * width);
+      memcpy(first_row, last_row, sizeof(uint16_t) * width);
+      memcpy(last_row, temp, sizeof(uint16_t) * width);
+      first_row += width;
+      last_row -= width;
+    }
+  }
+
+  return;
+}
+
+void h_horizontal_flip_data(uint16_t** fits_data, long* dim_sizes) {
+  int width = dim_sizes[0];
+  int row_count = dim_sizes[1] * dim_sizes[2];
+
+  for (int r = 0; r < row_count; r++) {
+    uint16_t* start = *fits_data + (r * width); 
+    uint16_t* end = *fits_data + ((r + 1) * width) - 1; 
+    uint16_t temp = 0;;
+    while (start < end) {
+      temp = *start;
+      *start = *end;
+      *end = temp;
+      start++;
+      end--;
+    }
+  }
+
   return;
 }
 
