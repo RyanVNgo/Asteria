@@ -121,7 +121,21 @@ void h_vertical_flip_data(uint16_t** fits_data, long* dim_sizes) {
 }
 
 void h_horizontal_flip_data(uint16_t** fits_data, long* dim_sizes) {
+  int width = dim_sizes[0];
+  int row_count = dim_sizes[1] * dim_sizes[2];
 
+  for (int r = 0; r < row_count; r++) {
+    uint16_t* start = *fits_data + (r * width); 
+    uint16_t* end = *fits_data + ((r + 1) * width) - 1; 
+    uint16_t temp = 0;;
+    while (start < end) {
+      temp = *start;
+      *start = *end;
+      *end = temp;
+      start++;
+      end--;
+    }
+  }
 
   return;
 }
