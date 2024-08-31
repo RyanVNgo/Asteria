@@ -144,7 +144,6 @@ GtkWidget* more_display_modes_widgets_get(SharedData* shared_data) {
   
   GtkWidget* horizontal_flip_button = gtk_button_new_with_label("HFlip");
   GtkWidget* vertical_flip_button = gtk_button_new_with_label("VFlip");
-  GtkWidget* monochrome_button = gtk_button_new_with_label("M");
 
   /* horizontal flip button  */
   //gtk_widget_set_size_request(horizontal_flip_button, 20, 20);
@@ -156,13 +155,8 @@ GtkWidget* more_display_modes_widgets_get(SharedData* shared_data) {
   gtk_widget_set_can_focus(vertical_flip_button, FALSE);
   g_signal_connect(vertical_flip_button, "clicked", G_CALLBACK(vertical_flip_activate), shared_data);
 
-  /* monochrome button  */
-  //gtk_widget_set_size_request(monochrome_button, 20, 20);
-  gtk_widget_set_can_focus(monochrome_button, FALSE);
-
   gtk_grid_attach(GTK_GRID(button_grid), horizontal_flip_button, 0, 0, 1, 1);
   gtk_grid_attach(GTK_GRID(button_grid), vertical_flip_button, 0, 1, 1, 1);
-  gtk_grid_attach(GTK_GRID(button_grid), monochrome_button, 1, 0, 1, 2);
 
   return button_grid;
 }
